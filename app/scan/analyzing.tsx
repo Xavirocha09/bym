@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -11,11 +11,10 @@ import Animated, {
   withTiming,
   FadeIn,
   FadeOut,
-  Easing,
 } from 'react-native-reanimated';
 import { LoadingPulse } from '@/components/common/LoadingPulse';
 import { Colors } from '@/constants/colors';
-import { fontSize, fontWeight, spacing } from '@/constants/theme';
+import { spacing } from '@/constants/theme';
 import { useScanStore } from '@/store/useScanStore';
 import { generateMockResult } from '@/data/mockResults';
 import { addHistoryItem } from '@/utils/historyStorage';
@@ -36,7 +35,7 @@ function AnimatedText({ text }: { text: string }) {
       key={text}
       entering={FadeIn.duration(400)}
       exiting={FadeOut.duration(300)}
-      style={styles.loadingText}
+      style={{ fontSize: 15, color: Colors.text.secondary, textAlign: 'center', letterSpacing: -0.2, lineHeight: 22, fontWeight: '500' }}
     >
       {text}
     </Animated.Text>
@@ -52,67 +51,26 @@ export default function AnalyzingScreen() {
   const dotOpacity3 = useSharedValue(0.15);
 
   useEffect(() => {
-    // Animate dot ellipsis
-    dotOpacity1.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 400 }),
-        withTiming(0.2, { duration: 400 }),
-        withTiming(0.2, { duration: 800 })
-      ),
-      -1,
-      false
-    );
-    dotOpacity2.value = withRepeat(
-      withSequence(
-        withTiming(0.3, { duration: 400 }),
-        withTiming(1, { duration: 400 }),
-        withTiming(0.2, { duration: 800 })
-      ),
-      -1,
-      false
-    );
-    dotOpacity3.value = withRepeat(
-      withSequence(
-        withTiming(0.1, { duration: 800 }),
-        withTiming(1, { duration: 400 }),
-        withTiming(0.2, { duration: 400 })
-      ),
-      -1,
-      false
-    );
+    dotOpacity1.value = withRepeat(withSequence(withTiming(1, { duration: 400 }), withTiming(0.2, { duration: 400 }), withTiming(0.2, { duration: 800 })), -1, false);
+    dotOpacity2.value = withRepeat(withSequence(withTiming(0.3, { duration: 400 }), withTiming(1, { duration: 400 }), withTiming(0.2, { duration: 800 })), -1, false);
+    dotOpacity3.value = withRepeat(withSequence(withTiming(0.1, { duration: 800 }), withTiming(1, { duration: 400 }), withTiming(0.2, { duration: 400 })), -1, false);
 
-    // Rotate through loading text
     const interval = setInterval(() => {
       setStepIndex((i) => {
-        if (i >= LOADING_TEXTS.length - 1) {
-          clearInterval(interval);
-          return i;
-        }
+        if (i >= LOADING_TEXTS.length - 1) { clearInterval(interval); return i; }
         return i + 1;
       });
     }, STEP_DURATION);
 
-    // Navigate to results after full analysis duration
     const timeout = setTimeout(async () => {
       if (!scanType) return;
       const result = generateMockResult(scanType, contextAnswers);
       setCurrentResult(result);
-
-      await addHistoryItem({
-        id: result.id,
-        scanType: result.scanType,
-        cautionLevel: result.cautionLevel,
-        summary: result.summary,
-        createdAt: result.createdAt,
-      });
-
+      await addHistoryItem({ id: result.id, scanType: result.scanType, cautionLevel: result.cautionLevel, summary: result.summary, createdAt: result.createdAt });
       router.replace('/scan/results');
     }, LOADING_TEXTS.length * STEP_DURATION + 600);
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+    return () => { clearInterval(interval); clearTimeout(timeout); };
   }, []);
 
   const dot1Style = useAnimatedStyle(() => ({ opacity: dotOpacity1.value }));
@@ -120,32 +78,30 @@ export default function AnalyzingScreen() {
   const dot3Style = useAnimatedStyle(() => ({ opacity: dotOpacity3.value }));
 
   return (
-    <LinearGradient colors={[Colors.bg.primary, Colors.bg.secondary, Colors.bg.primary]} style={styles.gradient}>
-      <View style={styles.container}>
+    <LinearGradient colors={[Colors.bg.primary, Colors.bg.secondary, Colors.bg.primary]} style={{ flex: 1 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl }}>
         {/* Pulse Animation */}
-        <View style={styles.pulseWrap}>
+        <View style={{ marginBottom: spacing.xxxl }}>
           <LoadingPulse
             color={Colors.teal.primary}
-            icon={
-              <Ionicons name="shield-checkmark" size={32} color={Colors.teal.primary} />
-            }
+            icon={<SymbolView name="checkmark.shield.fill" size={32} tintColor={Colors.teal.primary} />}
           />
         </View>
 
         {/* Status */}
-        <View style={styles.statusWrap}>
+        <View style={{ alignItems: 'center', gap: spacing.md, minHeight: 72 }}>
           <AnimatedText key={stepIndex} text={LOADING_TEXTS[stepIndex]} />
-          <View style={styles.dots}>
-            <Animated.View style={[styles.dot, dot1Style]} />
-            <Animated.View style={[styles.dot, dot2Style]} />
-            <Animated.View style={[styles.dot, dot3Style]} />
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+            <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.teal.primary }, dot1Style]} />
+            <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.teal.primary }, dot2Style]} />
+            <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.teal.primary }, dot3Style]} />
           </View>
         </View>
 
         {/* Privacy note */}
-        <View style={styles.privacyNote}>
-          <Ionicons name="lock-closed-outline" size={14} color={Colors.text.disabled} />
-          <Text style={styles.privacyText}>
+        <View style={{ position: 'absolute', bottom: 60, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <SymbolView name="lock.fill" size={13} tintColor={Colors.text.disabled} />
+          <Text style={{ fontSize: 11, color: Colors.text.disabled, letterSpacing: -0.1 }}>
             Analysis is private. Nothing leaves your device.
           </Text>
         </View>
@@ -153,52 +109,3 @@ export default function AnalyzingScreen() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-  },
-  pulseWrap: {
-    marginBottom: spacing.xxxl,
-  },
-  statusWrap: {
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: 72,
-  },
-  loadingText: {
-    fontSize: fontSize.base,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    letterSpacing: -0.2,
-    lineHeight: 22,
-    fontWeight: fontWeight.medium,
-  },
-  dots: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.teal.primary,
-  },
-  privacyNote: {
-    position: 'absolute',
-    bottom: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  privacyText: {
-    fontSize: fontSize.xs,
-    color: Colors.text.disabled,
-    letterSpacing: -0.1,
-  },
-});

@@ -17,7 +17,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="scan/type" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+          <Stack.Screen name="scan/type" options={{ presentation: 'formSheet' }} />
           <Stack.Screen name="scan/upload" />
           <Stack.Screen name="scan/context" />
           <Stack.Screen name="scan/analyzing" options={{ gestureEnabled: false, animation: 'fade' }} />

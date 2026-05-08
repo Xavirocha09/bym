@@ -8,7 +8,7 @@ export default function Index() {
   useEffect(() => {
     (async () => {
       const done = await isOnboardingComplete();
-      router.replace(done ? '/(tabs)' : '/onboarding');
+      router.replace(done ? ('/(tabs)/(home)' as any) : '/onboarding');
     })();
   }, []);
 
