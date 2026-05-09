@@ -47,8 +47,8 @@ Respond with ONLY valid JSON, no markdown, no explanation:
 Return empty arrays [] for categories not applicable to the scan type. nextSteps: 2-4 items. Be specific — not generic advice.`;
 
 async function sightengineScore(base64: string): Promise<number> {
-  const apiUser = process.env.SIGHTENGINE_API_USER;
-  const apiSecret = process.env.SIGHTENGINE_API_SECRET;
+  const apiUser = process.env.EXPO_SIGHTENGINE_API_USER;
+  const apiSecret = process.env.EXPO_SIGHTENGINE_API_SECRET;
   if (!apiUser || !apiSecret) return 0;
 
   try {
@@ -85,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.EXPO_OPENROUTER_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Server misconfigured' });
 
   const { images, scanType, contextText } = req.body as {
