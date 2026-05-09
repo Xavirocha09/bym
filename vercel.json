@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "api/analyze.ts": {
+      "maxDuration": 60
+    }
+  },
+  "buildCommand": "echo 'API only — no web build'",
+  "outputDirectory": "public"
+}
