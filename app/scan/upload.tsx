@@ -29,10 +29,9 @@ export default function UploadScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      selectionLimit: MAX_IMAGES - uploadedImages.length,
-      quality: 0.85,
+      mediaTypes: 'images',
+      allowsMultipleSelection: false,
+      quality: 0.4,
     });
     if (!result.canceled) {
       result.assets.forEach((asset) => addImage(asset.uri));

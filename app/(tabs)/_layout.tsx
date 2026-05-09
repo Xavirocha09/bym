@@ -9,7 +9,7 @@ export default function TabsLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(safety)">
         <Icon sf="checkmark.shield.fill" />
-        <Label>Safety</Label>
+        <Label>Learn</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(history)">
         <Icon sf="clock.fill" />

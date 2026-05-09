@@ -1,17 +1,17 @@
-import { CautionBadge } from '@/components/common/CautionBadge';
-import { GlassCard } from '@/components/common/GlassCard';
-import { PrimaryButton } from '@/components/common/PrimaryButton';
-import { CautionBorderColors, CautionColors, CautionLabels, CautionMutedColors, Colors } from '@/constants/colors';
-import { spacing } from '@/constants/theme';
-import { useScanStore } from '@/store/useScanStore';
-import { Signal, SignalSeverity } from '@/types';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, LayoutAnimation, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import React, { useState } from 'react';
-import { LayoutAnimation, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { GlassCard } from '@/components/common/GlassCard';
+import { CautionBadge } from '@/components/common/CautionBadge';
+import { Colors, CautionColors, CautionMutedColors, CautionBorderColors, CautionLabels } from '@/constants/colors';
+import { spacing } from '@/constants/theme';
+import { Signal, SignalSeverity, HistoryItem } from '@/types';
+import { getHistoryItem } from '@/utils/historyStorage';
+import { useScanStore } from '@/store/useScanStore';
 
 const SEVERITY_COLORS: Record<SignalSeverity, string> = {
   info: Colors.text.disabled,
@@ -49,15 +49,9 @@ function SignalRow({ signal }: { signal: Signal }) {
   );
 }
 
-interface ExpandableSectionProps {
-  title: string;
-  sf: string;
-  sfColor: string;
-  signals: Signal[];
-  defaultOpen?: boolean;
-}
-
-function ExpandableSignalSection({ title, sf, sfColor, signals, defaultOpen = false }: ExpandableSectionProps) {
+function ExpandableSignalSection({ title, sf, sfColor, signals, defaultOpen = false }: {
+  title: string; sf: string; sfColor: string; signals: Signal[]; defaultOpen?: boolean;
+}) {
   const [open, setOpen] = useState(defaultOpen);
 
   function toggle() {
@@ -65,7 +59,7 @@ function ExpandableSignalSection({ title, sf, sfColor, signals, defaultOpen = fa
     setOpen((v) => !v);
   }
 
-  if (signals.length === 0) return null;
+  if (!signals || signals.length === 0) return null;
 
   const highCount = signals.filter((s) => s.severity === 'high').length;
 
@@ -101,51 +95,55 @@ function ExpandableSignalSection({ title, sf, sfColor, signals, defaultOpen = fa
   );
 }
 
-export default function ResultsScreen() {
-  const { currentResult, resetScan } = useScanStore();
+export default function HistoryDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [item, setItem] = useState<HistoryItem | null>(null);
+  const [loading, setLoading] = useState(true);
   const insets = useSafeAreaInsets();
+  const { setScanType, resetScan } = useScanStore();
 
-  if (!currentResult) {
+  useEffect(() => {
+    getHistoryItem(id).then((result) => {
+      setItem(result);
+      setLoading(false);
+    });
+  }, [id]);
+
+  function handleNewScan() {
+    resetScan();
+    router.push('/scan/type');
+  }
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg.primary }}>
+        <ActivityIndicator color={Colors.teal.primary} />
+      </View>
+    );
+  }
+
+  if (!item) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg.primary, gap: spacing.md }}>
-        <Text style={{ color: Colors.text.muted, fontSize: 15 }}>No scan result found.</Text>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/(home)')}>
-          <Text style={{ color: Colors.teal.primary, fontSize: 15, fontWeight: '600' }}>Go home</Text>
+        <Text style={{ color: Colors.text.muted, fontSize: 15 }}>Scan not found.</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={{ color: Colors.teal.primary, fontSize: 15, fontWeight: '600' }}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const cautionColor = CautionColors[currentResult.cautionLevel];
-  const cautionMuted = CautionMutedColors[currentResult.cautionLevel];
-  const cautionBorder = CautionBorderColors[currentResult.cautionLevel];
-
-  function handleNewScan() {
-    router.dismissAll();
-    resetScan();
-    router.push('/scan/type');
-  }
-
-  function handleDone() {
-    router.dismissAll();
-    resetScan();
-    router.replace('/(tabs)/(home)');
-  }
+  const cautionColor = CautionColors[item.cautionLevel];
+  const cautionMuted = CautionMutedColors[item.cautionLevel];
+  const cautionBorder = CautionBorderColors[item.cautionLevel];
 
   return (
     <LinearGradient colors={[Colors.bg.secondary, Colors.bg.primary]} style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl }}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Nav */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm }}>
-          <Text style={{ fontSize: 11, fontWeight: '600', color: Colors.text.muted, letterSpacing: 0.8, textTransform: 'uppercase' }}>Safety Analysis</Text>
-          <TouchableOpacity style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }} onPress={handleDone} activeOpacity={0.7}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.teal.primary, letterSpacing: -0.2 }}>Done</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Overall Result Card */}
         <Animated.View entering={FadeInDown.delay(0).duration(500)}>
           <View style={{ borderRadius: 28, borderCurve: 'continuous', borderWidth: 1, padding: spacing.lg, gap: spacing.md, backgroundColor: cautionMuted, borderColor: cautionBorder }}>
@@ -153,24 +151,24 @@ export default function ResultsScreen() {
               <View style={{ width: 64, height: 64, borderRadius: 20, borderCurve: 'continuous', backgroundColor: `${cautionColor}25`, alignItems: 'center', justifyContent: 'center' }}>
                 <SymbolView name="checkmark.shield.fill" size={36} tintColor={cautionColor} />
               </View>
-              <CautionBadge level={currentResult.cautionLevel} size="lg" />
+              <CautionBadge level={item.cautionLevel} size="lg" />
             </View>
             <Text style={{ fontSize: 24, fontWeight: '800', letterSpacing: -0.8, color: cautionColor }}>
-              {CautionLabels[currentResult.cautionLevel]}
+              {CautionLabels[item.cautionLevel]}
             </Text>
             <Text style={{ fontSize: 15, color: Colors.text.secondary, lineHeight: 24, letterSpacing: -0.2 }}>
-              {currentResult.summary}
+              {item.summary}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <SymbolView name={SCAN_TYPE_SYMBOLS[currentResult.scanType] as any} size={13} tintColor={Colors.text.muted} />
+                <SymbolView name={SCAN_TYPE_SYMBOLS[item.scanType] as any} size={13} tintColor={Colors.text.muted} />
                 <Text style={{ fontSize: 11, color: Colors.text.muted, fontWeight: '500' }}>
-                  {currentResult.scanType.charAt(0).toUpperCase() + currentResult.scanType.slice(1)} Scan
+                  {item.scanType.charAt(0).toUpperCase() + item.scanType.slice(1)} Scan
                 </Text>
               </View>
               <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: Colors.text.disabled }} />
               <Text style={{ fontSize: 11, color: Colors.text.muted, fontWeight: '500' }}>
-                {new Date(currentResult.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </Text>
             </View>
           </View>
@@ -182,26 +180,26 @@ export default function ResultsScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(140).duration(500)}>
-          <ExpandableSignalSection title="Photo Signals" sf="photo" sfColor={Colors.indigo} signals={currentResult.photoSignals} defaultOpen />
+          <ExpandableSignalSection title="Photo Signals" sf="photo" sfColor={Colors.indigo} signals={item.photoSignals ?? []} defaultOpen />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(180).duration(500)}>
-          <ExpandableSignalSection title="Profile Signals" sf="person.fill" sfColor={Colors.teal.primary} signals={currentResult.profileSignals} defaultOpen />
+          <ExpandableSignalSection title="Profile Signals" sf="person.fill" sfColor={Colors.teal.primary} signals={item.profileSignals ?? []} defaultOpen />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(220).duration(500)}>
-          <ExpandableSignalSection title="Chat Signals" sf="bubble.left.fill" sfColor={Colors.warning} signals={currentResult.chatSignals} defaultOpen />
+          <ExpandableSignalSection title="Chat Signals" sf="bubble.left.fill" sfColor={Colors.warning} signals={item.chatSignals ?? []} defaultOpen />
         </Animated.View>
 
         {/* Next Steps */}
-        {currentResult.nextSteps.length > 0 && (
+        {item.nextSteps?.length > 0 && (
           <Animated.View entering={FadeInDown.delay(260).duration(500)}>
             <Text style={{ fontSize: 11, fontWeight: '600', color: Colors.text.muted, letterSpacing: 0.8, textTransform: 'uppercase', marginTop: spacing.sm, marginLeft: spacing.xs, marginBottom: spacing.sm }}>
               Recommended Next Steps
             </Text>
             <GlassCard padding={16}>
-              {currentResult.nextSteps.map((step, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, paddingVertical: spacing.sm + 2, borderBottomWidth: i < currentResult.nextSteps.length - 1 ? 1 : 0, borderBottomColor: Colors.separator }}>
+              {item.nextSteps.map((step, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, paddingVertical: spacing.sm + 2, borderBottomWidth: i < item.nextSteps.length - 1 ? 1 : 0, borderBottomColor: Colors.separator }}>
                   <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.teal.muted, alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                     <Text style={{ fontSize: 11, fontWeight: '700', color: Colors.teal.primary }}>{i + 1}</Text>
                   </View>
@@ -224,10 +222,15 @@ export default function ResultsScreen() {
           </GlassCard>
         </Animated.View>
 
-        {/* Actions */}
-        <Animated.View entering={FadeInDown.delay(340).duration(500)} style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-          <PrimaryButton label="Start New Scan" onPress={handleNewScan} />
-          <PrimaryButton label="Back to Home" onPress={handleDone} variant="outlined" />
+        {/* Action */}
+        <Animated.View entering={FadeInDown.delay(340).duration(500)} style={{ marginTop: spacing.sm }}>
+          <TouchableOpacity
+            onPress={handleNewScan}
+            activeOpacity={0.85}
+            style={{ backgroundColor: Colors.teal.primary, borderRadius: 16, borderCurve: 'continuous', paddingVertical: 16, alignItems: 'center' }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#000', letterSpacing: -0.3 }}>Start New Scan</Text>
+          </TouchableOpacity>
         </Animated.View>
       </ScrollView>
     </LinearGradient>

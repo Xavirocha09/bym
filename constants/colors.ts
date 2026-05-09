@@ -1,14 +1,14 @@
 export const Colors = {
   bg: {
-    primary: '#0D1117',
-    secondary: '#111827',
-    tertiary: '#101623',
+    primary: '#000000',
+    secondary: '#1C1C1E',
+    tertiary: '#2C2C2E',
   },
   card: {
-    bg: 'rgba(255, 255, 255, 0.05)',
-    border: 'rgba(255, 255, 255, 0.08)',
-    borderLight: 'rgba(255, 255, 255, 0.14)',
-    elevated: 'rgba(255, 255, 255, 0.09)',
+    bg: 'rgba(255, 255, 255, 0.08)',
+    border: 'rgba(255, 255, 255, 0.12)',
+    borderLight: 'rgba(255, 255, 255, 0.18)',
+    elevated: 'rgba(255, 255, 255, 0.11)',
   },
   teal: {
     primary: '#14B8A6',
@@ -28,15 +28,15 @@ export const Colors = {
   indigoMuted: 'rgba(99, 102, 241, 0.15)',
   text: {
     primary: '#FFFFFF',
-    secondary: '#D1D5DB',
-    muted: '#9CA3AF',
-    disabled: '#4B5563',
+    secondary: '#E4E4E7',
+    muted: '#A1A1AA',
+    disabled: '#71717A',
   },
   tab: {
     active: '#14B8A6',
-    inactive: '#6B7280',
+    inactive: '#71717A',
   },
-  separator: 'rgba(255, 255, 255, 0.06)',
+  separator: 'rgba(255, 255, 255, 0.08)',
 } as const;
 
 export type CautionLevel = 'low' | 'moderate' | 'elevated' | 'high';

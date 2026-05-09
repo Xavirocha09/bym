@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router/stack';
-import { PlatformColor } from 'react-native';
+import { Colors } from '@/constants/colors';
 
 export default function SafetyLayout() {
   return (
@@ -9,14 +9,15 @@ export default function SafetyLayout() {
         headerLargeTitle: true,
         headerLargeStyle: { backgroundColor: 'transparent' },
         headerBlurEffect: 'systemUltraThinMaterialDark',
-        headerTitleStyle: { color: PlatformColor('label') as any },
-        headerLargeTitleStyle: { color: PlatformColor('label') as any },
+        headerTitleStyle: { color: Colors.text.primary },
+        headerLargeTitleStyle: { color: Colors.text.primary },
         headerShadowVisible: false,
         headerLargeTitleShadowVisible: false,
-        contentStyle: { backgroundColor: '#0D1117' },
+        contentStyle: { backgroundColor: Colors.bg.primary },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Safety Guide' }} />
+      <Stack.Screen name="index" options={{ title: 'Learn' }} />
+      <Stack.Screen name="[id]" options={{ headerLargeTitle: false }} />
     </Stack>
   );
 }

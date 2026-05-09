@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, PlatformColor } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useFocusEffect, router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -24,27 +24,32 @@ const SCAN_LABELS: Record<ScanType, string> = {
 function HistoryCard({ item, onDelete }: { item: HistoryItem; onDelete: (id: string) => void }) {
   const date = new Date(item.createdAt);
   return (
-    <GlassCard padding={16}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md }}>
-        <View style={{ width: 44, height: 44, borderRadius: 13, borderCurve: 'continuous', backgroundColor: Colors.teal.muted, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <SymbolView name={SCAN_SYMBOLS[item.scanType] as any} size={22} tintColor={Colors.teal.primary} />
+    <TouchableOpacity onPress={() => router.push(`/(tabs)/(history)/${item.id}` as any)} activeOpacity={0.8}>
+      <GlassCard padding={16}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md }}>
+          <View style={{ width: 44, height: 44, borderRadius: 13, borderCurve: 'continuous', backgroundColor: Colors.teal.muted, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <SymbolView name={SCAN_SYMBOLS[item.scanType] as any} size={22} tintColor={Colors.teal.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.primary, letterSpacing: -0.3 }}>{SCAN_LABELS[item.scanType]}</Text>
+            <Text style={{ fontSize: 12, color: Colors.text.muted, marginTop: 2 }}>
+              {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => onDelete(item.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <SymbolView name="trash" size={17} tintColor={Colors.text.disabled} />
+          </TouchableOpacity>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: PlatformColor('label') as any, letterSpacing: -0.3 }}>{SCAN_LABELS[item.scanType]}</Text>
-          <Text style={{ fontSize: 12, color: PlatformColor('tertiaryLabel') as any, marginTop: 2 }}>
-            {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-          </Text>
+        <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: spacing.md }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <CautionBadge level={item.cautionLevel} size="sm" />
+          <SymbolView name="chevron.right" size={13} tintColor={Colors.text.disabled} weight="semibold" />
         </View>
-        <TouchableOpacity onPress={() => onDelete(item.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <SymbolView name="trash" size={17} tintColor={PlatformColor('quaternaryLabel') as any} />
-        </TouchableOpacity>
-      </View>
-      <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: spacing.md }} />
-      <CautionBadge level={item.cautionLevel} size="sm" />
-      <Text style={{ fontSize: 13, color: PlatformColor('secondaryLabel') as any, lineHeight: 18, letterSpacing: -0.1, marginTop: 8 }} numberOfLines={2}>
-        {item.summary}
-      </Text>
-    </GlassCard>
+        <Text style={{ fontSize: 13, color: Colors.text.secondary, lineHeight: 18, letterSpacing: -0.1, marginTop: 8 }} numberOfLines={2}>
+          {item.summary}
+        </Text>
+      </GlassCard>
+    </TouchableOpacity>
   );
 }
 
@@ -52,10 +57,10 @@ function EmptyState() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
       <View style={{ width: 72, height: 72, borderRadius: 22, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
-        <SymbolView name="clock" size={34} tintColor={PlatformColor('quaternaryLabel') as any} />
+        <SymbolView name="clock" size={34} tintColor={Colors.text.disabled} />
       </View>
-      <Text style={{ fontSize: 20, fontWeight: '700', color: PlatformColor('label') as any, letterSpacing: -0.5, marginBottom: spacing.sm }}>No scans yet</Text>
-      <Text style={{ fontSize: 15, color: PlatformColor('secondaryLabel') as any, textAlign: 'center', lineHeight: 22, letterSpacing: -0.2 }}>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: Colors.text.primary, letterSpacing: -0.5, marginBottom: spacing.sm }}>No scans yet</Text>
+      <Text style={{ fontSize: 15, color: Colors.text.secondary, textAlign: 'center', lineHeight: 22, letterSpacing: -0.2 }}>
         Your completed scans will appear here. Run your first safety scan from the Home tab.
       </Text>
     </View>

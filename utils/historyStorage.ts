@@ -3,6 +3,24 @@ import { HistoryItem } from '@/types';
 
 const HISTORY_KEY = '@bym_history';
 const ONBOARDING_KEY = '@bym_onboarding_complete';
+const READ_ARTICLES_KEY = '@bym_read_articles';
+
+export async function getReadArticles(): Promise<Set<string>> {
+  try {
+    const data = await AsyncStorage.getItem(READ_ARTICLES_KEY);
+    return data ? new Set(JSON.parse(data)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+export async function markArticleRead(id: string): Promise<void> {
+  try {
+    const read = await getReadArticles();
+    read.add(id);
+    await AsyncStorage.setItem(READ_ARTICLES_KEY, JSON.stringify([...read]));
+  } catch {}
+}
 
 export async function getHistory(): Promise<HistoryItem[]> {
   try {
@@ -19,6 +37,15 @@ export async function addHistoryItem(item: HistoryItem): Promise<void> {
     const updated = [item, ...history].slice(0, 50);
     await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
   } catch {}
+}
+
+export async function getHistoryItem(id: string): Promise<HistoryItem | null> {
+  try {
+    const history = await getHistory();
+    return history.find((h) => h.id === id) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function deleteHistoryItem(id: string): Promise<HistoryItem[]> {

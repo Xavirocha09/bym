@@ -28,10 +28,10 @@ function Row({ sf, sfColor = Colors.text.muted, label, subtitle, onPress, danger
         <SymbolView name={sf as any} size={17} tintColor={danger ? Colors.danger : sfColor} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15, fontWeight: '500', color: danger ? Colors.danger : PlatformColor('label') as any, letterSpacing: -0.3 }}>{label}</Text>
-        {subtitle && <Text style={{ fontSize: 12, color: PlatformColor('tertiaryLabel') as any, marginTop: 3, lineHeight: 16, letterSpacing: -0.1 }}>{subtitle}</Text>}
+        <Text style={{ fontSize: 15, fontWeight: '500', color: danger ? Colors.danger : Colors.text.primary, letterSpacing: -0.3 }}>{label}</Text>
+        {subtitle && <Text style={{ fontSize: 12, color: Colors.text.muted, marginTop: 3, lineHeight: 16, letterSpacing: -0.1 }}>{subtitle}</Text>}
       </View>
-      {onPress && !danger && <SymbolView name="chevron.right" size={13} tintColor={PlatformColor('tertiaryLabel') as any} weight="semibold" />}
+      {onPress && !danger && <SymbolView name="chevron.right" size={13} tintColor={Colors.text.muted} weight="semibold" />}
     </TouchableOpacity>
   );
 }
@@ -62,14 +62,14 @@ export default function SettingsScreen() {
           <View style={{ width: 80, height: 80, borderRadius: 22, borderCurve: 'continuous', backgroundColor: Colors.teal.muted, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm, borderWidth: 1, borderColor: `${Colors.teal.primary}30` }}>
             <SymbolView name="checkmark.shield.fill" size={36} tintColor={Colors.teal.primary} />
           </View>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: PlatformColor('label') as any, letterSpacing: -0.8 }}>BeforeYouMeet</Text>
-          <Text style={{ fontSize: 14, color: PlatformColor('secondaryLabel') as any, letterSpacing: -0.2 }}>Know the risks before you meet.</Text>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: Colors.text.primary, letterSpacing: -0.8 }}>BeforeYouMeet</Text>
+          <Text style={{ fontSize: 14, color: Colors.text.secondary, letterSpacing: -0.2 }}>Know the risks before you meet.</Text>
           <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', paddingHorizontal: spacing.md, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', marginTop: 4 }}>
-            <Text style={{ fontSize: 12, color: PlatformColor('quaternaryLabel') as any, fontWeight: '500' }}>Version 1.0.0 · MVP</Text>
+            <Text style={{ fontSize: 12, color: Colors.text.disabled, fontWeight: '500' }}>Version 1.0.0 · MVP</Text>
           </View>
         </View>
 
-        <Text style={{ fontSize: 12, fontWeight: '600', color: PlatformColor('tertiaryLabel') as any, textTransform: 'uppercase', letterSpacing: 0.8, marginLeft: 4 }}>Privacy</Text>
+        <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginLeft: 4 }}>Privacy</Text>
         <GlassCard padding={0} style={{ overflow: 'hidden' }}>
           <Row sf="lock.fill" sfColor={Colors.teal.primary} label="How your data is stored" subtitle="Scans are saved locally on your device only — never uploaded." />
           <Divider />
@@ -78,24 +78,24 @@ export default function SettingsScreen() {
           <Row sf="iphone" sfColor={Colors.teal.primary} label="On-device analysis" subtitle="All safety signals are generated locally. Screenshots stay on your phone." />
         </GlassCard>
 
-        <Text style={{ fontSize: 12, fontWeight: '600', color: PlatformColor('tertiaryLabel') as any, textTransform: 'uppercase', letterSpacing: 0.8, marginLeft: 4 }}>Your Data</Text>
+        <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginLeft: 4 }}>Your Data</Text>
         <GlassCard padding={0} style={{ overflow: 'hidden' }}>
           <Row sf="trash.fill" label="Delete all scan history" danger onPress={handleDeleteAll} />
         </GlassCard>
 
-        <Text style={{ fontSize: 12, fontWeight: '600', color: PlatformColor('tertiaryLabel') as any, textTransform: 'uppercase', letterSpacing: 0.8, marginLeft: 4 }}>Legal</Text>
+        <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginLeft: 4 }}>Legal</Text>
         <GlassCard padding={0} style={{ overflow: 'hidden' }}>
-          <Row sf="doc.text.fill" sfColor={PlatformColor('secondaryLabel') as any} label="Terms of Service" onPress={() => {}} />
+          <Row sf="doc.text.fill" sfColor={Colors.text.secondary} label="Terms of Service" onPress={() => {}} />
           <Divider />
-          <Row sf="shield.fill" sfColor={PlatformColor('secondaryLabel') as any} label="Privacy Policy" onPress={() => {}} />
+          <Row sf="shield.fill" sfColor={Colors.text.secondary} label="Privacy Policy" onPress={() => {}} />
         </GlassCard>
 
         <GlassCard padding={16}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
-            <SymbolView name="info.circle" size={16} tintColor={PlatformColor('quaternaryLabel') as any} />
-            <Text style={{ fontSize: 14, fontWeight: '600', color: PlatformColor('secondaryLabel') as any, letterSpacing: -0.3 }}>Important disclaimer</Text>
+            <SymbolView name="info.circle" size={16} tintColor={Colors.text.disabled} />
+            <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.text.secondary, letterSpacing: -0.3 }}>Important disclaimer</Text>
           </View>
-          <Text style={{ fontSize: 13, color: PlatformColor('tertiaryLabel') as any, lineHeight: 19, letterSpacing: -0.1 }}>
+          <Text style={{ fontSize: 13, color: Colors.text.muted, lineHeight: 19, letterSpacing: -0.1 }}>
             BYM provides AI-assisted guidance only and cannot confirm whether a person is genuine or deceptive. Results are pattern-based signals, not definitive conclusions.
           </Text>
         </GlassCard>

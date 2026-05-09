@@ -29,6 +29,10 @@ export interface HistoryItem {
   cautionLevel: CautionLevel;
   summary: string;
   createdAt: string;
+  photoSignals: Signal[];
+  profileSignals: Signal[];
+  chatSignals: Signal[];
+  nextSteps: string[];
 }
 
 export interface ContextQuestion {

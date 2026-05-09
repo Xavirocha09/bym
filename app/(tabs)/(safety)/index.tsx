@@ -1,142 +1,148 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, LayoutAnimation, PlatformColor } from 'react-native';
-import { Stack } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { Stack, router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { GlassCard } from '@/components/common/GlassCard';
 import { Colors } from '@/constants/colors';
 import { spacing } from '@/constants/theme';
+import { LESSONS, Lesson } from '@/data/lessons';
+import { getLessonProgress, LessonProgress } from '@/utils/lessonStorage';
 
-interface CheckItem { id: string; text: string }
-interface Section { id: string; title: string; sf: string; color: string; items: CheckItem[] }
-
-const SECTIONS: Section[] = [
-  {
-    id: 'before', title: 'Before Meeting', sf: 'calendar', color: Colors.teal.primary,
-    items: [
-      { id: 'b1', text: 'Video call at least once before meeting in person' },
-      { id: 'b2', text: 'Verify identity on LinkedIn or social media' },
-      { id: 'b3', text: 'Tell a trusted person your plans and location' },
-      { id: 'b4', text: 'Choose a busy public venue for the first meeting' },
-      { id: 'b5', text: 'Keep your home address private until trust is established' },
-    ],
-  },
-  {
-    id: 'during', title: 'During a First Date', sf: 'location.fill', color: Colors.indigo,
-    items: [
-      { id: 'd1', text: 'Arrange your own transportation both ways' },
-      { id: 'd2', text: 'Keep your phone charged and accessible' },
-      { id: 'd3', text: 'Share live location with a trusted contact' },
-      { id: 'd4', text: 'Trust your instincts — leave if something feels wrong' },
-      { id: 'd5', text: 'Avoid drinks you did not see being poured' },
-    ],
-  },
-  {
-    id: 'financial', title: 'Financial Safety', sf: 'creditcard.fill', color: Colors.warning,
-    items: [
-      { id: 'f1', text: 'Never send money to someone you haven\'t met in person' },
-      { id: 'f2', text: 'Avoid gift cards, wire transfers, or crypto requests' },
-      { id: 'f3', text: 'Be cautious of investment opportunities introduced early' },
-      { id: 'f4', text: 'Financial requests before meeting are a major red flag' },
-    ],
-  },
-  {
-    id: 'emotional', title: 'Emotional Safety', sf: 'heart.fill', color: Colors.danger,
-    items: [
-      { id: 'e1', text: 'Be mindful of relationships that escalate unusually fast' },
-      { id: 'e2', text: 'Isolation from friends or family is a warning sign' },
-      { id: 'e3', text: 'Consistent guilt-tripping or pressure is manipulation' },
-      { id: 'e4', text: 'You control the pace. Healthy connections respect boundaries' },
-    ],
-  },
-];
-
-function ChecklistSection({ section }: { section: Section }) {
-  const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [open, setOpen] = useState(true);
-
-  function toggle(id: string) {
-    setChecked(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  }
-
-  function toggleOpen() {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setOpen(v => !v);
-  }
-
-  const done = checked.size;
-  const total = section.items.length;
+function LessonCard({
+  lesson,
+  progress,
+  index,
+}: {
+  lesson: Lesson;
+  progress: LessonProgress | undefined;
+  index: number;
+}) {
+  const quizCount = lesson.steps.filter(s => s.type === 'quiz').length;
+  const completed = progress?.completed ?? false;
+  const minutes = Math.ceil(lesson.steps.length * 0.4);
 
   return (
-    <GlassCard padding={0} style={{ overflow: 'hidden' }}>
+    <Animated.View entering={FadeInDown.delay(index * 70).duration(400)}>
       <TouchableOpacity
-        style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md }}
-        onPress={toggleOpen}
+        onPress={() => router.push(`/(tabs)/(safety)/${lesson.id}` as any)}
         activeOpacity={0.8}
       >
-        <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: `${section.color}18`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <SymbolView name={section.sf as any} size={20} tintColor={section.color} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: PlatformColor('label') as any, letterSpacing: -0.3 }}>{section.title}</Text>
-          <Text style={{ fontSize: 12, color: section.color, marginTop: 2, fontWeight: '500' }}>{done}/{total} completed</Text>
-        </View>
-        <SymbolView name={open ? 'chevron.up' : 'chevron.down'} size={14} tintColor={PlatformColor('tertiaryLabel') as any} weight="semibold" />
-      </TouchableOpacity>
+        <GlassCard padding={16}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md }}>
+            {/* Icon */}
+            <View style={{ width: 52, height: 52, borderRadius: 16, borderCurve: 'continuous', backgroundColor: `${lesson.categoryColor}18`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <SymbolView name={lesson.sf as any} size={26} tintColor={lesson.categoryColor} />
+            </View>
 
-      <View style={{ height: 2, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: spacing.md }}>
-        <View style={{ height: 2, width: `${(done / total) * 100}%`, backgroundColor: section.color, borderRadius: 1, minWidth: done > 0 ? 4 : 0 }} />
-      </View>
-
-      {open && (
-        <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.xs }}>
-          {section.items.map((item, i) => (
-            <TouchableOpacity
-              key={item.id}
-              style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, paddingVertical: 10, borderBottomWidth: i < section.items.length - 1 ? 1 : 0, borderBottomColor: 'rgba(255,255,255,0.06)' }}
-              onPress={() => toggle(item.id)}
-              activeOpacity={0.7}
-            >
-              <View style={{ width: 22, height: 22, borderRadius: 7, borderCurve: 'continuous', borderWidth: 1.5, borderColor: checked.has(item.id) ? section.color : 'rgba(255,255,255,0.2)', backgroundColor: checked.has(item.id) ? section.color : 'transparent', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                {checked.has(item.id) && <SymbolView name="checkmark" size={12} tintColor="#fff" weight="bold" />}
+            <View style={{ flex: 1, gap: 5 }}>
+              {/* Category + status */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                <View style={{ backgroundColor: `${lesson.categoryColor}20`, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: lesson.categoryColor, letterSpacing: 0.2 }}>
+                    {lesson.category.toUpperCase()}
+                  </Text>
+                </View>
+                {!completed && (
+                  <View style={{ backgroundColor: Colors.teal.muted, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: Colors.teal.primary, letterSpacing: 0.2 }}>NEW</Text>
+                  </View>
+                )}
               </View>
-              <Text style={{ flex: 1, fontSize: 14, color: checked.has(item.id) ? PlatformColor('quaternaryLabel') as any : PlatformColor('secondaryLabel') as any, lineHeight: 20, letterSpacing: -0.1, textDecorationLine: checked.has(item.id) ? 'line-through' : 'none' }}>
-                {item.text}
+
+              <Text style={{ fontSize: 15, fontWeight: '700', color: Colors.text.primary, letterSpacing: -0.4, lineHeight: 20 }}>
+                {lesson.title}
               </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </GlassCard>
+
+              {/* Stats row */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <SymbolView name="star.fill" size={11} tintColor={Colors.warning} />
+                  <Text style={{ fontSize: 12, color: Colors.text.muted, fontWeight: '600' }}>+{lesson.xp} XP</Text>
+                </View>
+                <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: Colors.text.disabled }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <SymbolView name="checkmark.circle" size={11} tintColor={Colors.text.disabled} />
+                  <Text style={{ fontSize: 12, color: Colors.text.muted }}>{quizCount} questions</Text>
+                </View>
+                <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: Colors.text.disabled }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <SymbolView name="clock" size={11} tintColor={Colors.text.disabled} />
+                  <Text style={{ fontSize: 12, color: Colors.text.muted }}>{minutes} min</Text>
+                </View>
+              </View>
+
+              {/* Score if completed */}
+              {completed && progress && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 4 }}>
+                  <SymbolView name="checkmark.circle.fill" size={13} tintColor={Colors.success} />
+                  <Text style={{ fontSize: 12, color: Colors.success, fontWeight: '600' }}>
+                    Completed · {progress.score}/{progress.total} correct
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Chevron */}
+            <SymbolView name="chevron.right" size={13} tintColor={Colors.text.disabled} weight="semibold" style={{ marginTop: 2 }} />
+          </View>
+        </GlassCard>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
-export default function SafetyScreen() {
+export default function LearnScreen() {
+  const [progressMap, setProgressMap] = useState<Record<string, LessonProgress>>({});
+
+  useFocusEffect(useCallback(() => {
+    getLessonProgress().then(setProgressMap);
+  }, []));
+
+  const completedCount = LESSONS.filter(l => progressMap[l.id]?.completed).length;
+  const totalXP = Object.values(progressMap).reduce((sum, p) => sum + (p.xpEarned ?? 0), 0);
+  const maxXP = LESSONS.reduce((sum, l) => sum + l.xp, 0);
+
   return (
     <>
-      <Stack.Screen options={{ title: 'Safety Guide' }} />
+      <Stack.Screen options={{ title: 'Learn' }} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={{ flex: 1, backgroundColor: Colors.bg.primary }}
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <GlassCard padding={14}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <SymbolView name="info.circle.fill" size={16} tintColor={Colors.teal.primary} />
-            <Text style={{ flex: 1, fontSize: 13, color: PlatformColor('secondaryLabel') as any, lineHeight: 18, letterSpacing: -0.1 }}>
-              Evergreen safety practices — not tied to any specific scan.
-            </Text>
-          </View>
-        </GlassCard>
+        {/* Progress banner */}
+        <Animated.View entering={FadeInDown.delay(0).duration(400)}>
+          <GlassCard padding={16}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <View>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.text.secondary, letterSpacing: -0.2 }}>
+                  {completedCount}/{LESSONS.length} lessons complete
+                </Text>
+                <Text style={{ fontSize: 11, color: Colors.text.muted, marginTop: 2 }}>
+                  {totalXP} / {maxXP} XP earned
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,196,0,0.12)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
+                <SymbolView name="star.fill" size={14} tintColor={Colors.warning} />
+                <Text style={{ fontSize: 15, fontWeight: '800', color: Colors.warning }}>{totalXP} XP</Text>
+              </View>
+            </View>
+            <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+              <View style={{ height: 6, width: `${(completedCount / LESSONS.length) * 100}%`, backgroundColor: Colors.teal.primary, borderRadius: 3, minWidth: completedCount > 0 ? 8 : 0 }} />
+            </View>
+          </GlassCard>
+        </Animated.View>
 
-        {SECTIONS.map(s => <ChecklistSection key={s.id} section={s} />)}
-
-        <GlassCard padding={16}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: PlatformColor('secondaryLabel') as any, marginBottom: 6, letterSpacing: -0.3 }}>Remember</Text>
-          <Text style={{ fontSize: 13, color: PlatformColor('tertiaryLabel') as any, lineHeight: 19, letterSpacing: -0.1 }}>
-            BYM provides AI-assisted guidance only. Trust your own intuition above all else.
-          </Text>
-        </GlassCard>
+        {LESSONS.map((lesson, i) => (
+          <LessonCard
+            key={lesson.id}
+            lesson={lesson}
+            progress={progressMap[lesson.id]}
+            index={i + 1}
+          />
+        ))}
       </ScrollView>
     </>
   );

@@ -49,13 +49,22 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Greeting */}
-        <Animated.View entering={FadeInDown.delay(0).duration(500)}>
-          <Text style={{ fontSize: 15, color: PlatformColor('secondaryLabel') as any, marginBottom: 2 }}>
-            {getGreeting()}
-          </Text>
-          <Text style={{ fontSize: 13, color: PlatformColor('tertiaryLabel') as any }}>
-            Know the risks before you meet.
-          </Text>
+        <Animated.View entering={FadeInDown.delay(0).duration(500)} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <View>
+            <Text style={{ fontSize: 15, color: Colors.text.secondary, marginBottom: 2 }}>
+              {getGreeting()}
+            </Text>
+            <Text style={{ fontSize: 13, color: Colors.text.muted }}>
+              Know the risks before you meet.
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/onboarding')}
+            style={{ backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.3)', letterSpacing: 0.5 }}>DEV_</Text>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Hero Card */}
@@ -74,14 +83,14 @@ export default function HomeScreen() {
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.07)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: Colors.card.border }}>
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.teal.primary }} />
-                  <Text style={{ fontSize: 12, color: PlatformColor('secondaryLabel') as any, fontWeight: '500' }}>AI-Assisted Safety</Text>
+                  <Text style={{ fontSize: 12, color: Colors.text.secondary, fontWeight: '500' }}>AI-Assisted Safety</Text>
                 </View>
               </View>
 
-              <Text style={{ fontSize: 28, fontWeight: '800', color: PlatformColor('label') as any, letterSpacing: -0.8, marginBottom: 6 }}>
+              <Text style={{ fontSize: 28, fontWeight: '800', color: Colors.text.primary, letterSpacing: -0.8, marginBottom: 6 }}>
                 Before you meet
               </Text>
-              <Text style={{ fontSize: 15, color: PlatformColor('secondaryLabel') as any, lineHeight: 22, letterSpacing: -0.2, marginBottom: spacing.lg }}>
+              <Text style={{ fontSize: 15, color: Colors.text.secondary, lineHeight: 22, letterSpacing: -0.2, marginBottom: spacing.lg }}>
                 Run a private safety scan on a dating profile or chat screenshots.
               </Text>
 
@@ -116,13 +125,13 @@ export default function HomeScreen() {
 
         {/* Safety Tip */}
         <Animated.View entering={FadeInDown.delay(120).duration(500)}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: PlatformColor('secondaryLabel') as any, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.sm }}>Safety Tip</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.sm }}>Safety Tip</Text>
           <GlassCard padding={14}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
               <View style={{ width: 36, height: 36, borderRadius: 10, borderCurve: 'continuous', backgroundColor: Colors.warningMuted, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <SymbolView name="lightbulb.fill" size={18} tintColor={Colors.warning} />
               </View>
-              <Text style={{ flex: 1, fontSize: 14, color: PlatformColor('secondaryLabel') as any, lineHeight: 20, letterSpacing: -0.1 }}>
+              <Text style={{ flex: 1, fontSize: 14, color: Colors.text.secondary, lineHeight: 20, letterSpacing: -0.1 }}>
                 {SAFETY_TIPS[tipIndex]}
               </Text>
             </View>
@@ -133,7 +142,7 @@ export default function HomeScreen() {
         {recentScan && (
           <Animated.View entering={FadeInDown.delay(180).duration(500)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm }}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: PlatformColor('secondaryLabel') as any, textTransform: 'uppercase', letterSpacing: 0.5 }}>Recent Scan</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Recent Scan</Text>
               <TouchableOpacity onPress={() => router.push('/(tabs)/(history)')}>
                 <Text style={{ fontSize: 14, color: Colors.teal.primary, fontWeight: '500' }}>See all</Text>
               </TouchableOpacity>
@@ -145,10 +154,10 @@ export default function HomeScreen() {
                     <SymbolView name={SCAN_SYMBOLS[recentScan.scanType] as any} size={22} tintColor={Colors.teal.primary} />
                   </View>
                   <View>
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: PlatformColor('label') as any, letterSpacing: -0.3, marginBottom: 2 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.primary, letterSpacing: -0.3, marginBottom: 2 }}>
                       {SCAN_LABELS[recentScan.scanType]}
                     </Text>
-                    <Text style={{ fontSize: 12, color: PlatformColor('tertiaryLabel') as any }}>
+                    <Text style={{ fontSize: 12, color: Colors.text.muted }}>
                       {new Date(recentScan.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </Text>
                   </View>
@@ -161,14 +170,14 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <Animated.View entering={FadeInDown.delay(240).duration(500)}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: PlatformColor('secondaryLabel') as any, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.sm }}>Quick Actions</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.sm }}>Quick Actions</Text>
           <View style={{ flexDirection: 'row', gap: spacing.md }}>
             <TouchableOpacity style={{ flex: 1 }} onPress={() => router.push('/(tabs)/(safety)')} activeOpacity={0.85}>
               <GlassCard padding={16}>
                 <View style={{ width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: Colors.teal.muted, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md }}>
                   <SymbolView name="checkmark.shield.fill" size={22} tintColor={Colors.teal.primary} />
                 </View>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: PlatformColor('label') as any, letterSpacing: -0.3, lineHeight: 20 }}>Safety{'\n'}Guide</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.primary, letterSpacing: -0.3, lineHeight: 20 }}>Safety{'\n'}Guide</Text>
               </GlassCard>
             </TouchableOpacity>
             <TouchableOpacity style={{ flex: 1 }} onPress={() => router.push('/(tabs)/(history)')} activeOpacity={0.85}>
@@ -176,7 +185,7 @@ export default function HomeScreen() {
                 <View style={{ width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: Colors.indigoMuted, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md }}>
                   <SymbolView name="clock.fill" size={22} tintColor={Colors.indigo} />
                 </View>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: PlatformColor('label') as any, letterSpacing: -0.3, lineHeight: 20 }}>Scan{'\n'}History</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.primary, letterSpacing: -0.3, lineHeight: 20 }}>Scan{'\n'}History</Text>
               </GlassCard>
             </TouchableOpacity>
           </View>
