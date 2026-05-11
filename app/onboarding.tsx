@@ -996,6 +996,15 @@ const CONFIRM_PHRASES = [
   'Looks legit. Let\'s dig deeper.',
 ];
 
+const REVIEW_BRIDGES = [
+  'The good news?',
+  'But not today.',
+  'Still, you caught it.',
+  "Here's the win.",
+  'You still won.',
+  'You came through.',
+];
+
 function DemoScanScreen({ s, upd }: SP) {
   const [phase, setPhase] = useState<DemoPhase>('swipe');
   const [cardIdx, setCardIdx] = useState(0);
@@ -1137,6 +1146,10 @@ function DemoScanScreen({ s, upd }: SP) {
   }
 
   // ── Result phase ──
+  const OPENER_PREFIXES = ['Oops! That one was sneaky', 'So close — AI is that good', 'Tricky one, right', 'That fooled most people too', 'Even experts miss that one', 'A tough one — AI is scary good'];
+  const OPENER_SUFFIXES = ['.', '.', '?', '.', '.', '.'];
+  const openerIdx = retryCount % OPENER_PREFIXES.length;
+
   const SIGNALS = [
     { label: 'AI generation confirmed', sub: '91% confidence — pixel-level noise classifier detected diffusion model fingerprint', sf: 'camera.badge.exclamationmark.fill', color: Colors.danger },
     { label: 'Abnormal frequency spectrum', sub: 'DCT analysis shows non-natural high-frequency patterns absent in real camera photos', sf: 'waveform.badge.exclamationmark', color: Colors.orange },
@@ -1145,8 +1158,19 @@ function DemoScanScreen({ s, upd }: SP) {
 
   return (
     <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, justifyContent: 'center', paddingHorizontal: spacing.lg }}>
-      {/* Result header */}
-      <Animated.View entering={FadeInDown.delay(0).duration(400)}>
+
+      {/* Opener — rotates on retry */}
+      <Animated.View entering={FadeInDown.delay(0).duration(350)} style={{ marginBottom: spacing.md }}>
+        <Text style={{ fontSize: 32, fontWeight: '900', color: Colors.text.primary, letterSpacing: -1, lineHeight: 40 }}>
+          {OPENER_PREFIXES[openerIdx]},{' '}
+          <Text style={{ color: Colors.teal.primary }}>
+            {s.name}{OPENER_SUFFIXES[openerIdx]}
+          </Text>
+        </Text>
+      </Animated.View>
+
+      {/* HIGH CAUTION card — lands after opener */}
+      <Animated.View entering={FadeInDown.delay(110).duration(400)}>
         <View style={{ backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)', borderRadius: radius.xxl, padding: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md }}>
           <View style={{ width: 46, height: 46, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'rgba(239,68,68,0.2)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <SymbolView name="exclamationmark.shield.fill" size={24} tintColor={Colors.danger} />
@@ -1154,16 +1178,16 @@ function DemoScanScreen({ s, upd }: SP) {
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: Colors.danger, letterSpacing: -0.4 }}>HIGH CAUTION — AI Generated</Text>
             <Text style={{ fontSize: 13, color: Colors.text.muted, marginTop: 3, lineHeight: 18 }}>
-              That was not a real person, {s.name}. This is why you need BYM.
+              That was not a real person. This is exactly why BYM exists.
             </Text>
           </View>
         </View>
       </Animated.View>
 
-      {/* Signals */}
+      {/* Signals cascade */}
       <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
         {SIGNALS.map((sig, i) => (
-          <Animated.View key={sig.label} entering={FadeInDown.delay(120 + i * 110).duration(380)}>
+          <Animated.View key={sig.label} entering={FadeInDown.delay(230 + i * 120).duration(380)}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, backgroundColor: `${sig.color}10`, borderWidth: 1, borderColor: `${sig.color}28`, borderRadius: radius.xl, padding: spacing.md }}>
               <SymbolView name={sig.sf as any} size={18} tintColor={sig.color} style={{ marginTop: 2 }} />
               <View style={{ flex: 1 }}>
@@ -1177,15 +1201,13 @@ function DemoScanScreen({ s, upd }: SP) {
 
       {/* Try again — max 1 retry */}
       {retryCount < 1 && (
-        <Animated.View entering={FadeInDown.delay(480).duration(350)}>
+        <Animated.View entering={FadeInDown.delay(600).duration(350)}>
           <TouchableOpacity
             onPress={handleTryAgain}
             activeOpacity={0.7}
             style={{ alignItems: 'center', paddingVertical: spacing.md, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: Colors.card.border, borderRadius: radius.xl }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.secondary }}>
-              Try Again 
-            </Text>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.secondary }}>Try Again</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -1197,23 +1219,31 @@ function DemoScanScreen({ s, upd }: SP) {
 
 function ReviewScreen({ s }: SP) {
   const selectedProfile = DEMO_PROFILES.find((p) => p.id === s.demoSelectedId) ?? DEMO_PROFILES[0];
+  const [bridge] = useState(() => REVIEW_BRIDGES[Math.floor(Math.random() * REVIEW_BRIDGES.length)]);
 
   return (
-    <Animated.View entering={FadeIn.duration(400).easing(Easing.out(Easing.quad))} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg }}>
-      <Animated.View entering={FadeInDown.delay(80).duration(500)} style={{ marginBottom: spacing.lg, position: 'relative' }}>
-        <View style={{ width: 130, height: 130, borderRadius: radius.xxl, overflow: 'hidden', borderWidth: 3, borderColor: Colors.danger }}>
-          <Image source={selectedProfile.source} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-        </View>
-        <View style={{ position: 'absolute', bottom: -10, alignSelf: 'center', backgroundColor: Colors.danger, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 2, borderColor: Colors.bg.primary }}>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: 'white', letterSpacing: 0.5 }}>AI GENERATED</Text>
-        </View>
+    <Animated.View entering={FadeIn.duration(400).easing(Easing.out(Easing.quad))} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, gap: spacing.xl }}>
+      <Animated.View entering={FadeInDown.delay(0).duration(400)} style={{ alignSelf: 'center' }}>
+        <Text style={{ fontSize: 48, fontWeight: '900', color: Colors.text.primary, letterSpacing: -1.5, lineHeight: 54, textAlign: 'center' }}>
+          {bridge}
+        </Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(220).duration(600)} style={{ alignItems: 'center', gap: spacing.lg }}>
-        <Text style={{ fontSize: 30, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', letterSpacing: -0.9, lineHeight: 38 }}>
+      <Animated.View entering={FadeInDown.delay(220).duration(500)} style={{ alignItems: 'center', position: 'relative' }}>
+        <View style={{ width: 140, height: 140, borderRadius: radius.xxl, overflow: 'hidden', borderWidth: 3, borderColor: Colors.danger, shadowColor: Colors.danger, shadowOpacity: 0.45, shadowRadius: 16, shadowOffset: { width: 0, height: 4 } }}>
+          <Image source={selectedProfile.source} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        </View>
+        <Animated.View entering={FadeIn.delay(440).duration(350)} style={{ position: 'absolute', bottom: -12, alignSelf: 'center', backgroundColor: Colors.danger, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 2, borderColor: Colors.bg.primary, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <SymbolView name="exclamationmark.triangle.fill" size={10} tintColor="white" />
+          <Text style={{ fontSize: 11, fontWeight: '800', color: 'white', letterSpacing: 0.6 }}>AI GENERATED</Text>
+        </Animated.View>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(380).duration(600)} style={{ alignItems: 'center', gap: spacing.md }}>
+        <Text style={{ fontSize: 28, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', letterSpacing: -0.8, lineHeight: 36 }}>
           You just caught a dangerous profile, <Text style={{ color: Colors.teal.primary }}>{s.name}.</Text>
         </Text>
-        <Text style={{ fontSize: 16, color: Colors.text.muted, textAlign: 'center', lineHeight: 24, letterSpacing: -0.2 }}>
+        <Text style={{ fontSize: 16, color: Colors.text.muted, textAlign: 'center', lineHeight: 25, letterSpacing: -0.2 }}>
           AI faces are getting harder to spot every day. Most people can't tell the difference anymore — but now you have a tool that can.
         </Text>
       </Animated.View>
