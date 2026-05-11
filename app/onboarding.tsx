@@ -1,5 +1,6 @@
 import { Colors } from '@/constants/colors';
 import { radius, spacing } from '@/constants/theme';
+import { useRevenueCat } from '@/providers/revenuecat-provider';
 import { setOnboardingComplete } from '@/utils/historyStorage';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +12,7 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   SafeAreaView,
   Text,
@@ -25,6 +27,7 @@ import Animated, {
   Extrapolation,
   FadeIn,
   FadeInDown,
+  FadeInRight,
   interpolate,
   runOnJS,
   useAnimatedStyle,
@@ -128,15 +131,180 @@ function Q({ text }: { text: string }) {
 // ─── Screen 0: Welcome ────────────────────────────────────────────────────────
 
 function WelcomeScreen() {
+  const flameColors = {
+    outer: '#14939C',
+    inner: '#26BFC6',
+    emberPrimary: '#72E9EE',
+    emberSecondary: '#D9FEFF',
+    shadow: '#7DECEF',
+  } as const;
+
+  const flameDrift = useSharedValue(0);
+  const flamePulse = useSharedValue(0);
+  const emberRise = useSharedValue(0);
+
+  useEffect(() => {
+    flameDrift.value = withDelay(
+      250,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.sin) }),
+          withTiming(-1, { duration: 1800, easing: Easing.inOut(Easing.sin) })
+        ),
+        -1,
+        true
+      )
+    );
+
+    flamePulse.value = withDelay(
+      250,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+          withTiming(0, { duration: 1100, easing: Easing.inOut(Easing.quad) })
+        ),
+        -1,
+        false
+      )
+    );
+
+    emberRise.value = withDelay(
+      350,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 2100, easing: Easing.out(Easing.cubic) }),
+          withTiming(0, { duration: 0 })
+        ),
+        -1,
+        false
+      )
+    );
+
+    return () => {
+      cancelAnimation(flameDrift);
+      cancelAnimation(flamePulse);
+      cancelAnimation(emberRise);
+    };
+  }, [emberRise, flameDrift, flamePulse]);
+
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(flameDrift.value, [-1, 1], [2, -6], Extrapolation.CLAMP) },
+      { rotate: `${interpolate(flameDrift.value, [-1, 1], [-1.2, 1.2], Extrapolation.CLAMP)}deg` },
+      { scale: interpolate(flamePulse.value, [0, 1], [1, 1.035], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  const outerGlowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(flamePulse.value, [0, 1], [0.2, 0.42], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(flameDrift.value, [-1, 1], [10, -2], Extrapolation.CLAMP) },
+      { scaleX: interpolate(flamePulse.value, [0, 1], [0.88, 1.1], Extrapolation.CLAMP) },
+      { scaleY: interpolate(flamePulse.value, [0, 1], [0.82, 1.18], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  const innerGlowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(flamePulse.value, [0, 1], [0.18, 0.36], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(flamePulse.value, [0, 1], [6, -8], Extrapolation.CLAMP) },
+      { scaleX: interpolate(flamePulse.value, [0, 1], [0.9, 1.06], Extrapolation.CLAMP) },
+      { scaleY: interpolate(flamePulse.value, [0, 1], [0.78, 1.16], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  const emberPrimaryStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(emberRise.value, [0, 0.18, 0.72, 1], [0, 0.7, 0.28, 0], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(emberRise.value, [0, 1], [22, -30], Extrapolation.CLAMP) },
+      { translateX: interpolate(flameDrift.value, [-1, 1], [-7, 9], Extrapolation.CLAMP) },
+      { scale: interpolate(emberRise.value, [0, 1], [0.7, 1.05], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  const emberSecondaryStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(emberRise.value, [0, 0.1, 0.58, 1], [0, 0.48, 0.22, 0], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(emberRise.value, [0, 1], [18, -42], Extrapolation.CLAMP) },
+      { translateX: interpolate(flameDrift.value, [-1, 1], [10, -12], Extrapolation.CLAMP) },
+      { scale: interpolate(emberRise.value, [0, 1], [0.55, 0.95], Extrapolation.CLAMP) },
+    ],
+  }));
+
   return (
     <Animated.View entering={FadeIn.duration(600)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl }}>
       <Animated.View entering={FadeInDown.delay(100).duration(600)} style={{ marginBottom: 40 }}>
-        <View style={{
-          width: 130, height: 130, borderRadius: 38, borderCurve: 'continuous',
-          backgroundColor: Colors.teal.muted, borderWidth: 1, borderColor: `${Colors.teal.primary}40`,
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <SymbolView name="checkmark.shield.fill" size={62} tintColor={Colors.teal.primary} />
+        <View style={{ width: 180, height: 180, alignItems: 'center', justifyContent: 'center' }}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              {
+                position: 'absolute',
+                bottom: 18,
+                width: 124,
+                height: 124,
+                borderRadius: 999,
+                backgroundColor: flameColors.outer,
+              },
+              outerGlowStyle,
+            ]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              {
+                position: 'absolute',
+                bottom: 34,
+                width: 92,
+                height: 108,
+                borderRadius: 999,
+                backgroundColor: flameColors.inner,
+              },
+              innerGlowStyle,
+            ]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              {
+                position: 'absolute',
+                bottom: 88,
+                width: 14,
+                height: 14,
+                borderRadius: 999,
+                backgroundColor: flameColors.emberPrimary,
+              },
+              emberPrimaryStyle,
+            ]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              {
+                position: 'absolute',
+                bottom: 78,
+                width: 9,
+                height: 9,
+                borderRadius: 999,
+                backgroundColor: flameColors.emberSecondary,
+              },
+              emberSecondaryStyle,
+            ]}
+          />
+          <Animated.View style={logoAnimatedStyle}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={{
+                height: 130,
+                width: 130,
+                borderRadius: 40,
+                shadowColor: flameColors.shadow,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.8,
+                shadowRadius: 3,
+              }}
+            />
+          </Animated.View>
         </View>
       </Animated.View>
       <Animated.View entering={FadeInDown.delay(250).duration(600)} style={{ alignItems: 'center', gap: spacing.md }}>
@@ -623,12 +791,35 @@ function PromiseScreen({ s }: SP) {
   };
   const goal = worryLabel[s.topWorry ?? 'catfish'];
 
+  const pulse = useSharedValue(1);
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.00, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(pulse);
+  }, []);
+
   return (
     <Animated.View entering={FadeIn.duration(400).easing(Easing.out(Easing.quad))} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl }}>
       <Animated.View entering={FadeInDown.delay(100).duration(600)} style={{ marginBottom: 36 }}>
-        <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: Colors.teal.muted, borderWidth: 1, borderColor: `${Colors.teal.primary}35`, alignItems: 'center', justifyContent: 'center' }}>
+        {/* <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: Colors.teal.muted, borderWidth: 1, borderColor: `${Colors.teal.primary}35`, alignItems: 'center', justifyContent: 'center' }}>
           <SymbolView name="checkmark.shield.fill" size={54} tintColor={Colors.teal.primary} />
-        </View>
+        </View> */}
+        <Animated.Image
+          source={require('@/assets/images/logo.png')}
+          style={[ 
+            pulseStyle,{
+            height: 100,
+            width: 100
+          }]}
+        />
       </Animated.View>
       <Animated.View entering={FadeInDown.delay(250).duration(600)} style={{ alignItems: 'center', gap: spacing.lg }}>
         <Text style={{ fontSize: 34, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', letterSpacing: -1, lineHeight: 42 }}>
@@ -794,7 +985,16 @@ function SwipeCard({ profile, onSwipeLeft, onSwipeRight }: {
   );
 }
 
-type DemoPhase = 'swipe' | 'scanning' | 'result';
+type DemoPhase = 'swipe' | 'confirm' | 'scanning' | 'result';
+
+const CONFIRM_PHRASES = [
+  'Looks real, right?',
+  'Good instinct. But let\'s make sure.',
+  'This one does look convincing...',
+  'Most people would trust this one.',
+  'Your gut says real. Let\'s verify.',
+  'Looks legit. Let\'s dig deeper.',
+];
 
 function DemoScanScreen({ s, upd }: SP) {
   const [phase, setPhase] = useState<DemoPhase>('swipe');
@@ -814,6 +1014,11 @@ function DemoScanScreen({ s, upd }: SP) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelected(picked);
     upd({ demoSelectedId: picked.id });
+    setPhase('confirm');
+  }
+
+  function handleScanNow() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPhase('scanning');
     pulse.value = withRepeat(withTiming(0.75, { duration: 650 }), -1, true);
     setTimeout(() => {
@@ -866,6 +1071,50 @@ function DemoScanScreen({ s, upd }: SP) {
         <Text style={{ fontSize: 13, color: Colors.text.disabled, marginTop: spacing.md }}>
           {cardIdx + 1} / {DEMO_PROFILES.length} profiles
         </Text>
+      </Animated.View>
+    );
+  }
+
+  // ── Confirm phase ──
+  if (phase === 'confirm') {
+    const phrase = CONFIRM_PHRASES[retryCount % CONFIRM_PHRASES.length];
+    return (
+      <Animated.View entering={FadeInRight.duration(350)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg }}>
+        {/* Selected profile card with teal border */}
+        <Animated.View entering={FadeInDown.delay(0).duration(400)} style={{ width: CARD_W, height: CARD_H * 0.66, borderRadius: radius.xxl, overflow: 'hidden', marginBottom: spacing.lg }}>
+          {selected && <Image source={selected.source} style={{ width: '100%', height: '100%' }} resizeMode="cover" />}
+          {/* Teal glow border */}
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius.xxl, borderWidth: 3, borderColor: Colors.teal.primary }} />
+          {/* Checkmark badge */}
+          <Animated.View entering={FadeIn.delay(150).duration(300)} style={{ position: 'absolute', top: 14, right: 14, width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.teal.primary, alignItems: 'center', justifyContent: 'center', shadowColor: Colors.teal.primary, shadowOpacity: 0.6, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }}>
+            <SymbolView name="checkmark" size={19} tintColor={Colors.bg.primary} weight="bold" />
+          </Animated.View>
+        </Animated.View>
+
+        {/* Phrase + sub */}
+        <Animated.View entering={FadeInDown.delay(120).duration(400)} style={{ alignItems: 'center', marginBottom: spacing.xl }}>
+          <Text style={{ fontSize: 26, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', letterSpacing: -0.7, lineHeight: 34 }}>
+            {phrase}
+          </Text>
+          <Text style={{ fontSize: 14, color: Colors.text.muted, textAlign: 'center', marginTop: spacing.sm, lineHeight: 20 }}>
+            Let BYM run a deep scan on this profile.
+          </Text>
+        </Animated.View>
+
+        {/* Scan Now CTA */}
+        <Animated.View entering={FadeInDown.delay(260).duration(400)} style={{ width: '100%' }}>
+          <TouchableOpacity onPress={handleScanNow} activeOpacity={0.85} style={{ borderRadius: 999, overflow: 'hidden' }}>
+            <LinearGradient
+              colors={[Colors.teal.primary, Colors.teal.light]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ height: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+            >
+              <SymbolView name="magnifyingglass" size={20} tintColor={Colors.bg.primary} weight="semibold" />
+              <Text style={{ fontSize: 18, fontWeight: '800', color: Colors.bg.primary, letterSpacing: -0.4 }}>Scan Now</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
       </Animated.View>
     );
   }
@@ -926,8 +1175,8 @@ function DemoScanScreen({ s, upd }: SP) {
         ))}
       </View>
 
-      {/* Try again — max 2 retries */}
-      {retryCount < 2 && (
+      {/* Try again — max 1 retry */}
+      {retryCount < 1 && (
         <Animated.View entering={FadeInDown.delay(480).duration(350)}>
           <TouchableOpacity
             onPress={handleTryAgain}
@@ -935,7 +1184,7 @@ function DemoScanScreen({ s, upd }: SP) {
             style={{ alignItems: 'center', paddingVertical: spacing.md, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: Colors.card.border, borderRadius: radius.xl }}
           >
             <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.secondary }}>
-              Try Again ({2 - retryCount} left)
+              Try Again 
             </Text>
           </TouchableOpacity>
         </Animated.View>
@@ -965,7 +1214,7 @@ function ReviewScreen({ s }: SP) {
           You just caught a dangerous profile, <Text style={{ color: Colors.teal.primary }}>{s.name}.</Text>
         </Text>
         <Text style={{ fontSize: 16, color: Colors.text.muted, textAlign: 'center', lineHeight: 24, letterSpacing: -0.2 }}>
-          AI faces are getting harder to spot every month. Most people can't tell the difference anymore — but now you have a tool that can.
+          AI faces are getting harder to spot every day. Most people can't tell the difference anymore — but now you have a tool that can.
         </Text>
       </Animated.View>
     </Animated.View>
@@ -1154,7 +1403,6 @@ function SocialProofScreen({ s }: SP) {
   return (
     <Animated.View entering={FadeIn.duration(400).easing(Easing.out(Easing.quad))} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg }}>
       <Animated.View entering={FadeInDown.delay(100).duration(500)} style={{ alignItems: 'center', marginBottom: spacing.xl }}>
-        
         <Text style={{ fontSize: 30, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', letterSpacing: -0.9, lineHeight: 38 }}>
           BYM was built for people{'\n'}who <Text style={{ color: Colors.teal.primary }}>take their safety seriously.</Text>
         </Text>
@@ -1186,7 +1434,69 @@ function SocialProofScreen({ s }: SP) {
 
 // ─── Screen 22: Paywall ───────────────────────────────────────────────────────
 
-function PaywallScreen({ s, onNext }: SP) {
+function PaywallScreen({ onNext }: SP) {
+  const { presentPaywall } = useRevenueCat();
+  const [loading, setLoading] = useState(false);
+
+  const scanY = useSharedValue(-2);
+  const scanOpacity = useSharedValue(0);
+  const badgeOpacity = useSharedValue(0);
+  const badgeScale = useSharedValue(0.75);
+  const pulseScale = useSharedValue(1);
+
+  useEffect(() => {
+    scanOpacity.value = withTiming(1, { duration: 400 });
+    scanY.value = withDelay(
+      300,
+      withRepeat(
+        withSequence(
+          withTiming(154, { duration: 1000, easing: Easing.linear }),
+          withTiming(-2, { duration: 0 })
+        ),
+        2,
+        false,
+        () => {
+          scanOpacity.value = withTiming(0, { duration: 250 });
+          badgeOpacity.value = withDelay(250, withTiming(1, { duration: 400 }));
+          badgeScale.value = withDelay(250, withSpring(1, { damping: 10, stiffness: 160 }));
+          pulseScale.value = withDelay(900, withRepeat(
+            withSequence(
+              withTiming(1.06, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+              withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) })
+            ),
+            -1,
+            false
+          ));
+        }
+      )
+    );
+  }, []);
+
+  const scanLineStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scanY.value }],
+    opacity: scanOpacity.value,
+  }));
+
+  const scanChipStyle = useAnimatedStyle(() => ({
+    opacity: scanOpacity.value,
+  }));
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    opacity: badgeOpacity.value,
+    transform: [{ scale: badgeScale.value }],
+  }));
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  async function handleTrial() {
+    setLoading(true);
+    await presentPaywall();
+    setLoading(false);
+    onNext();
+  }
+
   const BENEFITS = [
     { sf: 'magnifyingglass.circle.fill', label: 'Unlimited profile + chat scans', color: Colors.teal.primary },
     { sf: 'chart.bar.fill', label: 'Detailed risk reports with next steps', color: Colors.indigo },
@@ -1196,13 +1506,53 @@ function PaywallScreen({ s, onNext }: SP) {
 
   return (
     <Animated.View entering={FadeIn.duration(400).easing(Easing.out(Easing.quad))} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg }}>
+      {/* Image with animated scan overlay */}
+      <View style={{ width: '100%', height: 150, marginBottom: spacing.lg }}>
+        <Image
+          source={require('@/assets/images/fake-profiles.png')}
+          style={{ width: '100%', height: '100%' }}
+          resizeMode='contain'
+        />
+
+        {/* Scanning beam */}
+        <Animated.View style={[{ position: 'absolute', left: 0, right: 0, pointerEvents: 'none' }, scanLineStyle]}>
+          <LinearGradient
+            colors={['transparent', `${Colors.teal.primary}CC`, Colors.teal.primary, `${Colors.teal.primary}CC`, 'transparent']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={{ height: 2 }}
+          />
+          <LinearGradient
+            colors={[`${Colors.teal.primary}28`, 'transparent']}
+            style={{ height: 22 }}
+          />
+        </Animated.View>
+
+        {/* Scanning chip */}
+        <Animated.View style={[{ position: 'absolute', top: 8, left: 8 }, scanChipStyle]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: `${Colors.teal.primary}40` }}>
+            <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: Colors.teal.primary }} />
+            <Text style={{ fontSize: 10, fontWeight: '700', color: Colors.teal.primary, letterSpacing: 0.8 }}>SCANNING</Text>
+          </View>
+        </Animated.View>
+
+        {/* Detection badge */}
+        <Animated.View style={[{ position: 'absolute', bottom: 8, left: 0, right: 0, alignItems: 'center' }, badgeStyle]}>
+          <Animated.View style={pulseStyle}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(220,38,38,0.95)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,120,120,0.4)' }}>
+              <SymbolView name="xmark.shield.fill" size={14} tintColor="white" />
+              <Text style={{ fontSize: 12, fontWeight: '800', color: 'white', letterSpacing: 0.6 }}>AI GENERATION DETECTED</Text>
+            </View>
+          </Animated.View>
+        </Animated.View>
+      </View>
       <Animated.View entering={FadeInDown.delay(100).duration(500)} style={{ alignItems: 'center', marginBottom: spacing.lg }}>
         <Text style={{ fontSize: 32, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', letterSpacing: -1, lineHeight: 40, marginBottom: spacing.sm }}>
           Unlimited scans.{'\n'}
           <Text style={{ color: Colors.teal.primary }}>Total confidence.</Text>
         </Text>
         <Text style={{ fontSize: 15, color: Colors.text.muted, textAlign: 'center', lineHeight: 22 }}>
-          Less than one coffee per month to date safely.
+          Less than one coffee to date safely.
         </Text>
       </Animated.View>
 
@@ -1218,15 +1568,22 @@ function PaywallScreen({ s, onNext }: SP) {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(620).duration(400)} style={{ width: '100%', gap: spacing.md }}>
-        <TouchableOpacity style={{ borderRadius: 999, overflow: 'hidden' }} onPress={onNext} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={{ borderRadius: 999, overflow: 'hidden', opacity: loading ? 0.6 : 1 }}
+          onPress={handleTrial}
+          activeOpacity={0.85}
+          disabled={loading}
+        >
           <LinearGradient colors={[Colors.teal.primary, Colors.teal.light]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
             style={{ height: 58, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 17, fontWeight: '800', color: Colors.bg.primary, letterSpacing: -0.4 }}>Start Free 7-Day Trial</Text>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: Colors.bg.primary, letterSpacing: -0.4 }}>
+              {loading ? 'Loading...' : 'Start Free 3-Day Trial'}
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onNext} activeOpacity={0.7} style={{ alignItems: 'center', paddingVertical: spacing.sm }}>
+        {/* <TouchableOpacity onPress={onNext} activeOpacity={0.7} style={{ alignItems: 'center', paddingVertical: spacing.sm }}>
           <Text style={{ fontSize: 14, color: Colors.text.disabled }}>Continue without trial</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </Animated.View>
     </Animated.View>
   );
@@ -1353,7 +1710,10 @@ export default function Onboarding() {
               </LinearGradient>
             </TouchableOpacity>
             <Text style={{ fontSize: 11, color: Colors.text.disabled, textAlign: 'center', letterSpacing: -0.1 }}>
-              AI-assisted guidance only. Not a definitive safety guarantee.
+              By continuing you accept the{' '}
+              <Text onPress={() => Linking.openURL('https://beforeyoumeet.vercel.app/terms.html')} style={{ color: Colors.teal.primary, textDecorationLine: 'underline' }}>
+                terms
+              </Text>
             </Text>
           </View>
         )}

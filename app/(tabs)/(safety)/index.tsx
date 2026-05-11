@@ -8,56 +8,66 @@ import { Colors } from '@/constants/colors';
 import { spacing } from '@/constants/theme';
 import { LESSONS, Lesson } from '@/data/lessons';
 import { getLessonProgress, LessonProgress } from '@/utils/lessonStorage';
+import { useRevenueCat } from '@/providers/revenuecat-provider';
 
 function LessonCard({
   lesson,
   progress,
   index,
+  locked,
+  onLockedPress,
 }: {
   lesson: Lesson;
   progress: LessonProgress | undefined;
   index: number;
+  locked: boolean;
+  onLockedPress: () => void;
 }) {
   const quizCount = lesson.steps.filter(s => s.type === 'quiz').length;
   const completed = progress?.completed ?? false;
   const minutes = Math.ceil(lesson.steps.length * 0.4);
 
+  function handlePress() {
+    if (locked) {
+      onLockedPress();
+    } else {
+      router.push(`/(tabs)/(safety)/${lesson.id}` as any);
+    }
+  }
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).duration(400)}>
-      <TouchableOpacity
-        onPress={() => router.push(`/(tabs)/(safety)/${lesson.id}` as any)}
-        activeOpacity={0.8}
-      >
-        <GlassCard padding={16}>
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.8}>
+        <GlassCard padding={16} style={locked ? { opacity: 0.6 } : undefined}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md }}>
             {/* Icon */}
-            <View style={{ width: 52, height: 52, borderRadius: 16, borderCurve: 'continuous', backgroundColor: `${lesson.categoryColor}18`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <SymbolView name={lesson.sf as any} size={26} tintColor={lesson.categoryColor} />
+            <View style={{ width: 52, height: 52, borderRadius: 16, borderCurve: 'continuous', backgroundColor: locked ? 'rgba(255,255,255,0.06)' : `${lesson.categoryColor}18`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <SymbolView name={locked ? 'lock.fill' : lesson.sf as any} size={26} tintColor={locked ? Colors.text.disabled : lesson.categoryColor} />
             </View>
 
             <View style={{ flex: 1, gap: 5 }}>
               {/* Category + status */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                <View style={{ backgroundColor: `${lesson.categoryColor}20`, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: lesson.categoryColor, letterSpacing: 0.2 }}>
-                    {lesson.category.toUpperCase()}
+                <View style={{ backgroundColor: locked ? 'rgba(255,255,255,0.06)' : `${lesson.categoryColor}20`, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: locked ? Colors.text.disabled : lesson.categoryColor, letterSpacing: 0.2 }}>
+                    {locked ? 'PRO' : lesson.category.toUpperCase()}
                   </Text>
                 </View>
-                {!completed && (
+                {!completed && !locked && (
                   <View style={{ backgroundColor: Colors.teal.muted, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
                     <Text style={{ fontSize: 10, fontWeight: '700', color: Colors.teal.primary, letterSpacing: 0.2 }}>NEW</Text>
                   </View>
                 )}
               </View>
 
-              <Text style={{ fontSize: 15, fontWeight: '700', color: Colors.text.primary, letterSpacing: -0.4, lineHeight: 20 }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: locked ? Colors.text.muted : Colors.text.primary, letterSpacing: -0.4, lineHeight: 20 }}>
                 {lesson.title}
               </Text>
 
               {/* Stats row */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <SymbolView name="star.fill" size={11} tintColor={Colors.warning} />
+                  <SymbolView name="star.fill" size={11} tintColor={locked ? Colors.text.disabled : Colors.warning} />
                   <Text style={{ fontSize: 12, color: Colors.text.muted, fontWeight: '600' }}>+{lesson.xp} XP</Text>
                 </View>
                 <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: Colors.text.disabled }} />
@@ -83,8 +93,14 @@ function LessonCard({
               )}
             </View>
 
-            {/* Chevron */}
-            <SymbolView name="chevron.right" size={13} tintColor={Colors.text.disabled} weight="semibold" style={{ marginTop: 2 }} />
+            {/* Lock or chevron */}
+            <SymbolView
+              name={locked ? 'lock.fill' : 'chevron.right'}
+              size={13}
+              tintColor={locked ? Colors.warning : Colors.text.disabled}
+              weight="semibold"
+              style={{ marginTop: 2 }}
+            />
           </View>
         </GlassCard>
       </TouchableOpacity>
@@ -94,6 +110,7 @@ function LessonCard({
 
 export default function LearnScreen() {
   const [progressMap, setProgressMap] = useState<Record<string, LessonProgress>>({});
+  const { isPro, presentPaywall } = useRevenueCat();
 
   useFocusEffect(useCallback(() => {
     getLessonProgress().then(setProgressMap);
@@ -135,14 +152,19 @@ export default function LearnScreen() {
           </GlassCard>
         </Animated.View>
 
-        {LESSONS.map((lesson, i) => (
-          <LessonCard
-            key={lesson.id}
-            lesson={lesson}
-            progress={progressMap[lesson.id]}
-            index={i + 1}
-          />
-        ))}
+        {LESSONS.map((lesson, i) => {
+          const locked = !isPro && i > 0;
+          return (
+            <LessonCard
+              key={lesson.id}
+              lesson={lesson}
+              progress={progressMap[lesson.id]}
+              index={i + 1}
+              locked={locked}
+              onLockedPress={() => void presentPaywall()}
+            />
+          );
+        })}
       </ScrollView>
     </>
   );

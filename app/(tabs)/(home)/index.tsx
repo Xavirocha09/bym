@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, PlatformColor } from 'react-native';
-import { Stack, router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SymbolView } from 'expo-symbols';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { GlassCard } from '@/components/common/GlassCard';
 import { CautionBadge } from '@/components/common/CautionBadge';
+import { GlassCard } from '@/components/common/GlassCard';
 import { Colors } from '@/constants/colors';
-import { spacing, radius } from '@/constants/theme';
-import { getHistory } from '@/utils/historyStorage';
-import { HistoryItem, ScanType } from '@/types';
+import { spacing } from '@/constants/theme';
 import { SAFETY_TIPS } from '@/data/mockResults';
+import { useRevenueCat } from '@/providers/revenuecat-provider';
+import { HistoryItem, ScanType } from '@/types';
+import { getHistory } from '@/utils/historyStorage';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Stack, router } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const SCAN_SYMBOLS: Record<ScanType, string> = {
   profile: 'person.circle.fill',
@@ -34,10 +35,26 @@ function getGreeting() {
 export default function HomeScreen() {
   const [recentScan, setRecentScan] = useState<HistoryItem | null>(null);
   const [tipIndex] = useState(() => Math.floor(Math.random() * SAFETY_TIPS.length));
+  const { isPro, proEntitlement, isConfigured, presentPaywall, presentCustomerCenter } = useRevenueCat();
 
   useEffect(() => {
     getHistory().then((h) => setRecentScan(h[0] ?? null));
   }, []);
+
+  async function handleScanPress() {
+    if (isPro) {
+      router.push('/scan/type');
+      return;
+    }
+    const history = await getHistory();
+    if (history.length >= 1) {
+      await presentPaywall();
+      // After paywall closes the user either subscribed or dismissed.
+      // isPro will update via the RevenueCat listener — let them tap again.
+      return;
+    }
+    router.push('/scan/type');
+  }
 
   return (
     <>
@@ -78,9 +95,16 @@ export default function HomeScreen() {
             />
             <View style={{ padding: spacing.lg }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md }}>
-                <View style={{ width: 52, height: 52, borderRadius: 16, borderCurve: 'continuous', backgroundColor: Colors.teal.muted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: `${Colors.teal.primary}30` }}>
+                {/* <View style={{ width: 52, height: 52, borderRadius: 16, borderCurve: 'continuous', backgroundColor: Colors.teal.muted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: `${Colors.teal.primary}30` }}>
                   <SymbolView name="checkmark.shield.fill" size={26} tintColor={Colors.teal.primary} />
-                </View>
+                </View> */}
+                <Image                                                                                                                                   
+                  source={require('@/assets/images/logo.png')}                                                                                           
+                  style={{                                                                                                                               
+                  height: 52,                                                                                                                         
+                  width: 52                                                                                                                           
+                  }}                                                                                                                                     
+                />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.07)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: Colors.card.border }}>
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.teal.primary }} />
                   <Text style={{ fontSize: 12, color: Colors.text.secondary, fontWeight: '500' }}>AI-Assisted Safety</Text>
@@ -97,7 +121,7 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                 <TouchableOpacity
                   style={{ flex: 1, borderRadius: 999, overflow: 'hidden' }}
-                  onPress={() => router.push('/scan/type')}
+                  onPress={() => void handleScanPress()}
                   activeOpacity={0.85}
                 >
                   <LinearGradient
@@ -112,7 +136,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 46, paddingHorizontal: spacing.md, backgroundColor: Colors.teal.muted, borderRadius: 999, borderWidth: 1, borderColor: `${Colors.teal.primary}35` }}
-                  onPress={() => router.push('/scan/type')}
+                  onPress={() => void handleScanPress()}
                   activeOpacity={0.85}
                 >
                   <SymbolView name="bubble.left.and.bubble.right.fill" size={16} tintColor={Colors.teal.primary} />
@@ -122,6 +146,60 @@ export default function HomeScreen() {
             </View>
           </GlassCard>
         </Animated.View>
+
+        {!isPro &&
+          <Animated.View entering={FadeInDown.delay(90).duration(500)}>
+            <GlassCard padding={0} borderColor={isPro ? `${Colors.teal.primary}45` : Colors.card.borderLight}>
+              <View style={{ padding: spacing.lg, gap: spacing.md }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                    <View style={{ width: 46, height: 46, borderRadius: 14, borderCurve: 'continuous', backgroundColor: isPro ? Colors.teal.muted : 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' }}>
+                      <SymbolView name="crown.fill" size={22} tintColor={isPro ? Colors.teal.primary : Colors.warning} />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 18, fontWeight: '800', color: Colors.text.primary, letterSpacing: -0.4 }}>BYM Pro</Text>
+                      <View style={{ backgroundColor: isPro ? Colors.teal.muted : Colors.warningMuted, position:'absolute', right: 0, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: isPro ? Colors.teal.primary : Colors.warning }}>
+                          {isPro ? 'ACTIVE' : 'UPGRADE'}
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 12, color: Colors.text.muted, marginTop: 2 }}>
+                        {isPro ? 'Entitlement active' : 'Unlock premium subscription access'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, borderRadius: 999, overflow: 'hidden' }}
+                    onPress={() => {
+                      if (isPro) {
+                        void presentCustomerCenter();
+                        return;
+                      }
+
+                      void presentPaywall();
+                    }}
+                    activeOpacity={0.85}
+                    disabled={!isConfigured}
+                  >
+                    <LinearGradient
+                      colors={[Colors.teal.primary, Colors.teal.light]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{ alignItems: 'center', justifyContent: 'center', height: 44, opacity: isConfigured ? 1 : 0.5 }}
+                    >
+                      <Text style={{ fontSize: 15, fontWeight: '700', color: Colors.bg.primary, letterSpacing: -0.2 }}>
+                        {isPro ? 'Manage plan' : 'Upgrade now'}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </GlassCard>
+          </Animated.View>
+        }
 
         {/* Safety Tip */}
         <Animated.View entering={FadeInDown.delay(120).duration(500)}>

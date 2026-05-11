@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.compoundxavier.bym"
+      "bundleIdentifier": "com.compoundxavier.bym",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +25,6 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.compoundxavier.bym"
@@ -44,6 +46,7 @@
           "photosPermission": "BeforeYouMeet needs access to your photos to upload screenshots for safety analysis."
         }
       ],
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
@@ -60,6 +63,14 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "root": "./app"
+      },
+      "eas": {
+        "projectId": "047e6239-61b5-4ff0-9e5f-b39dc8f742ec"
+      }
     }
   }
 }

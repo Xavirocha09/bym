@@ -5,11 +5,12 @@ import { CautionBorderColors, CautionColors, CautionLabels, CautionMutedColors, 
 import { spacing } from '@/constants/theme';
 import { useScanStore } from '@/store/useScanStore';
 import { Signal, SignalSeverity } from '@/types';
+import { enableLearnReminders, getHasPromptedForLearnReminders, getLearnRemindersEnabled, markLearnRemindersPrompted } from '@/utils/learnNotifications';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import React, { useState } from 'react';
-import { LayoutAnimation, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, LayoutAnimation, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -120,16 +121,64 @@ export default function ResultsScreen() {
   const cautionMuted = CautionMutedColors[currentResult.cautionLevel];
   const cautionBorder = CautionBorderColors[currentResult.cautionLevel];
 
-  function handleNewScan() {
+  function startNewScan() {
     router.dismissAll();
     resetScan();
     router.push('/scan/type');
   }
 
-  function handleDone() {
+  function goHome() {
     router.dismissAll();
     resetScan();
     router.replace('/(tabs)/(home)');
+  }
+
+  async function continueWithReminderPrompt(nextAction: () => void) {
+    const [hasPrompted, remindersEnabled] = await Promise.all([
+      getHasPromptedForLearnReminders(),
+      getLearnRemindersEnabled(),
+    ]);
+
+    if (hasPrompted || remindersEnabled) {
+      nextAction();
+      return;
+    }
+
+    Alert.alert(
+      'Get Learn reminders?',
+      'Turn on short tips and lesson reminders so BYM can bring you back to the Learn tab after scans.',
+      [
+        {
+          text: 'Not now',
+          style: 'cancel',
+          onPress: () => {
+            void markLearnRemindersPrompted();
+            nextAction();
+          },
+        },
+        {
+          text: 'Turn on reminders',
+          onPress: () => {
+            void enableRemindersThenContinue(nextAction);
+          },
+        },
+      ]
+    );
+  }
+
+  async function enableRemindersThenContinue(nextAction: () => void) {
+    await markLearnRemindersPrompted();
+
+    const status = await enableLearnReminders();
+
+    if (status !== 'granted') {
+      Alert.alert(
+        'Notifications are off',
+        'You can enable reminders later if you want quick tips from the Learn tab.'
+      );
+    }
+
+    nextAction();
   }
 
   return (
@@ -141,7 +190,7 @@ export default function ResultsScreen() {
         {/* Nav */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm }}>
           <Text style={{ fontSize: 11, fontWeight: '600', color: Colors.text.muted, letterSpacing: 0.8, textTransform: 'uppercase' }}>Safety Analysis</Text>
-          <TouchableOpacity style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }} onPress={handleDone} activeOpacity={0.7}>
+          <TouchableOpacity style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }} onPress={() => void continueWithReminderPrompt(goHome)} activeOpacity={0.7}>
             <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.teal.primary, letterSpacing: -0.2 }}>Done</Text>
           </TouchableOpacity>
         </View>
@@ -226,8 +275,8 @@ export default function ResultsScreen() {
 
         {/* Actions */}
         <Animated.View entering={FadeInDown.delay(340).duration(500)} style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-          <PrimaryButton label="Start New Scan" onPress={handleNewScan} />
-          <PrimaryButton label="Back to Home" onPress={handleDone} variant="outlined" />
+          <PrimaryButton label="Start New Scan" onPress={() => void continueWithReminderPrompt(startNewScan)} />
+          <PrimaryButton label="Back to Home" onPress={() => void continueWithReminderPrompt(goHome)} variant="outlined" />
         </Animated.View>
       </ScrollView>
     </LinearGradient>
