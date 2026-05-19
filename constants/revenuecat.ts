@@ -1,4 +1,4 @@
-export const REVENUECAT_API_KEY = 'test_iKreiTcOMbNdfHkbVRWMFRWOkDx';
+export const REVENUECAT_API_KEY = process.env.EXPO_PUBLIC_RC_IOS_KEY ?? '';
 
 export const BYM_PRO_ENTITLEMENT_ID = 'BYM Pro';
 
