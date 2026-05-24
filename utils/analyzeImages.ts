@@ -1,5 +1,4 @@
-import { CONTEXT_QUESTIONS } from '@/data/mockResults';
-import { ScanResult, ScanType, Signal, SignalSeverity } from '@/types';
+import { ScanResult, Signal, SignalSeverity } from '@/types';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 
@@ -29,27 +28,17 @@ function addIds(signals: Omit<Signal, 'id'>[], prefix: string): Signal[] {
 
 export async function analyzeImages(
   imageUris: string[],
-  scanType: ScanType,
-  contextAnswers: Record<string, boolean | null>
+  contextNote: string
 ): Promise<ScanResult> {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   if (!apiUrl) throw new Error('Missing EXPO_PUBLIC_API_URL in .env');
 
   const images = await Promise.all(imageUris.map(uriToBase64));
 
-  const contextText = CONTEXT_QUESTIONS
-    .map(q => {
-      const a = contextAnswers[q.id];
-      if (a === null || a === undefined) return null;
-      return `- ${q.text}: ${a ? 'YES' : 'NO'}`;
-    })
-    .filter(Boolean)
-    .join('\n');
-
   const response = await fetch(`${apiUrl}/api/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ images, scanType, contextText }),
+    body: JSON.stringify({ images, scanType: 'full', contextText: contextNote }),
   });
 
   if (!response.ok) {
@@ -61,7 +50,7 @@ export async function analyzeImages(
 
   return {
     id: `scan_${Date.now()}`,
-    scanType,
+    scanType: 'full',
     cautionLevel: parsed.cautionLevel,
     summary: parsed.summary,
     photoSignals: addIds(parsed.photoSignals ?? [], 'photo'),

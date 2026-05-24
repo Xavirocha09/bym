@@ -22,7 +22,7 @@ const SCAN_SYMBOLS: Record<ScanType, string> = {
 const SCAN_LABELS: Record<ScanType, string> = {
   profile: 'Profile Scan',
   chat: 'Chat Scan',
-  full: 'Full Scan',
+  full: 'Safety Scan',
 };
 
 function getGreeting() {
@@ -43,7 +43,7 @@ export default function HomeScreen() {
 
   async function handleScanPress() {
     if (isPro) {
-      router.push('/scan/type');
+      router.push('/scan/upload');
       return;
     }
     const history = await getHistory();
@@ -53,7 +53,7 @@ export default function HomeScreen() {
       // isPro will update via the RevenueCat listener — let them tap again.
       return;
     }
-    router.push('/scan/type');
+    router.push('/scan/upload');
   }
 
   return (
@@ -131,16 +131,8 @@ export default function HomeScreen() {
                     style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 46, paddingHorizontal: spacing.md }}
                   >
                     <SymbolView name="person.circle.fill" size={18} tintColor={Colors.bg.primary} />
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.bg.primary, letterSpacing: -0.2 }}>Scan Profile</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.bg.primary, letterSpacing: -0.2 }}>Scan image</Text>
                   </LinearGradient>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 46, paddingHorizontal: spacing.md, backgroundColor: Colors.teal.muted, borderRadius: 999, borderWidth: 1, borderColor: `${Colors.teal.primary}35` }}
-                  onPress={() => void handleScanPress()}
-                  activeOpacity={0.85}
-                >
-                  <SymbolView name="bubble.left.and.bubble.right.fill" size={16} tintColor={Colors.teal.primary} />
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.teal.primary, letterSpacing: -0.2 }}>Scan Chat</Text>
                 </TouchableOpacity>
               </View>
             </View>

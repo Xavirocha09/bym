@@ -31,7 +31,7 @@ const SEVERITY_SYMBOLS: Record<SignalSeverity, string> = {
 const SCAN_TYPE_SYMBOLS: Record<string, string> = {
   profile: 'person.circle',
   chat: 'bubble.left.and.bubble.right',
-  full: 'magnifyingglass.circle',
+  full: 'checkmark.shield',
 };
 
 function SignalRow({ signal }: { signal: Signal }) {
@@ -214,7 +214,7 @@ export default function ResultsScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SymbolView name={SCAN_TYPE_SYMBOLS[currentResult.scanType] as any} size={13} tintColor={Colors.text.muted} />
                 <Text style={{ fontSize: 11, color: Colors.text.muted, fontWeight: '500' }}>
-                  {currentResult.scanType.charAt(0).toUpperCase() + currentResult.scanType.slice(1)} Scan
+                  {currentResult.scanType === 'full' ? 'Safety Scan' : currentResult.scanType.charAt(0).toUpperCase() + currentResult.scanType.slice(1) + ' Scan'}
                 </Text>
               </View>
               <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: Colors.text.disabled }} />

@@ -1,27 +1,22 @@
 import { create } from 'zustand';
-import { ScanType, ScanResult } from '@/types';
+import { ScanResult } from '@/types';
 
 interface ScanStore {
-  scanType: ScanType | null;
   uploadedImages: string[];
-  contextAnswers: Record<string, boolean | null>;
+  contextNote: string;
   currentResult: ScanResult | null;
 
-  setScanType: (type: ScanType) => void;
   addImage: (uri: string) => void;
   removeImage: (index: number) => void;
-  setContextAnswer: (questionId: string, answer: boolean | null) => void;
+  setContextNote: (note: string) => void;
   setCurrentResult: (result: ScanResult) => void;
   resetScan: () => void;
 }
 
 export const useScanStore = create<ScanStore>((set) => ({
-  scanType: null,
   uploadedImages: [],
-  contextAnswers: {},
+  contextNote: '',
   currentResult: null,
-
-  setScanType: (type) => set({ scanType: type }),
 
   addImage: (uri) =>
     set((state) => ({ uploadedImages: [...state.uploadedImages, uri] })),
@@ -31,18 +26,14 @@ export const useScanStore = create<ScanStore>((set) => ({
       uploadedImages: state.uploadedImages.filter((_, i) => i !== index),
     })),
 
-  setContextAnswer: (questionId, answer) =>
-    set((state) => ({
-      contextAnswers: { ...state.contextAnswers, [questionId]: answer },
-    })),
+  setContextNote: (note) => set({ contextNote: note }),
 
   setCurrentResult: (result) => set({ currentResult: result }),
 
   resetScan: () =>
     set({
-      scanType: null,
       uploadedImages: [],
-      contextAnswers: {},
+      contextNote: '',
       currentResult: null,
     }),
 }));

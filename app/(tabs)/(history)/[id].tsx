@@ -100,7 +100,7 @@ export default function HistoryDetailScreen() {
   const [item, setItem] = useState<HistoryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const insets = useSafeAreaInsets();
-  const { setScanType, resetScan } = useScanStore();
+  const { resetScan } = useScanStore();
 
   useEffect(() => {
     getHistoryItem(id).then((result) => {
@@ -111,7 +111,7 @@ export default function HistoryDetailScreen() {
 
   function handleNewScan() {
     resetScan();
-    router.push('/scan/type');
+    router.push('/scan/upload');
   }
 
   if (loading) {
@@ -163,7 +163,7 @@ export default function HistoryDetailScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SymbolView name={SCAN_TYPE_SYMBOLS[item.scanType] as any} size={13} tintColor={Colors.text.muted} />
                 <Text style={{ fontSize: 11, color: Colors.text.muted, fontWeight: '500' }}>
-                  {item.scanType.charAt(0).toUpperCase() + item.scanType.slice(1)} Scan
+                  {item.scanType === 'full' ? 'Safety Scan' : item.scanType.charAt(0).toUpperCase() + item.scanType.slice(1) + ' Scan'}
                 </Text>
               </View>
               <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: Colors.text.disabled }} />

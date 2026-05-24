@@ -44,7 +44,7 @@ function AnimatedText({ text }: { text: string }) {
 }
 
 export default function AnalyzingScreen() {
-  const { scanType, uploadedImages, contextAnswers, setCurrentResult } = useScanStore();
+  const { uploadedImages, contextNote, setCurrentResult } = useScanStore();
   const [stepIndex, setStepIndex] = useState(0);
 
   const dotOpacity1 = useSharedValue(1);
@@ -52,7 +52,7 @@ export default function AnalyzingScreen() {
   const dotOpacity3 = useSharedValue(0.15);
 
   useEffect(() => {
-    if (!scanType) { router.back(); return; }
+    if (!uploadedImages.length) { router.back(); return; }
 
     // Dot animation
     dotOpacity1.value = withRepeat(withSequence(withTiming(1, { duration: 400 }), withTiming(0.2, { duration: 400 }), withTiming(0.2, { duration: 800 })), -1, false);
@@ -70,7 +70,7 @@ export default function AnalyzingScreen() {
     );
 
     // Real API call
-    const apiCall = analyzeImages(uploadedImages, scanType, contextAnswers);
+    const apiCall = analyzeImages(uploadedImages, contextNote);
 
     Promise.all([apiCall, minTime])
       .then(async ([result]) => {

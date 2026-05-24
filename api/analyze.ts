@@ -106,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const focusHint =
     scanType === 'profile' ? 'Focus on photo authenticity, profile consistency, and bio red flags.' :
     scanType === 'chat' ? 'Focus on manipulation patterns, financial requests, emotional pressure, and inconsistencies.' :
-    'Provide a comprehensive analysis of both profile and conversation.';
+    'Analyze all provided screenshots comprehensively. Content may include profile photos, bio/about sections, and/or chat conversations — analyze whatever is present and relevant.';
 
   const userText = [
     `Analyze these ${scanType === 'full' ? 'profile and chat' : scanType} screenshots for dating safety concerns.`,

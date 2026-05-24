@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
@@ -15,7 +15,7 @@ import { useScanStore } from '@/store/useScanStore';
 const MAX_IMAGES = 6;
 
 export default function UploadScreen() {
-  const { scanType, uploadedImages, addImage, removeImage } = useScanStore();
+  const { uploadedImages, contextNote, addImage, removeImage, setContextNote } = useScanStore();
   const insets = useSafeAreaInsets();
 
   async function handlePickImage() {
@@ -38,11 +38,6 @@ export default function UploadScreen() {
     }
   }
 
-  const uploadLabel =
-    scanType === 'profile' ? 'Profile screenshots'
-    : scanType === 'chat' ? 'Chat screenshots'
-    : 'Profile & chat screenshots';
-
   return (
     <LinearGradient colors={[Colors.bg.secondary, Colors.bg.primary]} style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
@@ -53,24 +48,23 @@ export default function UploadScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <SymbolView name="chevron.left" size={16} tintColor={Colors.text.secondary} weight="semibold" />
+            <SymbolView name="xmark" size={16} tintColor={Colors.text.secondary} weight="semibold" />
           </TouchableOpacity>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.secondary, letterSpacing: -0.2 }}>Upload Screenshots</Text>
-          <View style={{ backgroundColor: Colors.teal.muted, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: `${Colors.teal.primary}30` }}>
-            <Text style={{ fontSize: 11, color: Colors.teal.primary, fontWeight: '600' }}>1 of 3</Text>
-          </View>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.text.secondary, letterSpacing: -0.2 }}>Safety Scan</Text>
+          <View style={{ width: 40 }} />
         </View>
 
         <ScrollView
           contentContainerStyle={{ padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.md }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInDown.delay(0).duration(400)}>
             <Text style={{ fontSize: 34, fontWeight: '800', color: Colors.text.primary, letterSpacing: -1, lineHeight: 40, marginBottom: spacing.xs }}>
-              Add your{'\n'}{uploadLabel}
+              Add your{'\n'}screenshots
             </Text>
             <Text style={{ fontSize: 15, color: Colors.text.muted, lineHeight: 22, letterSpacing: -0.2 }}>
-              Crop out personal information like phone numbers whenever possible.
+              Upload whatever you have — profile photos, bio, or chat screenshots.
             </Text>
           </Animated.View>
 
@@ -82,7 +76,7 @@ export default function UploadScreen() {
                   <SymbolView name="lock.fill" size={15} tintColor={Colors.teal.primary} />
                 </View>
                 <Text style={{ flex: 1, fontSize: 13, color: Colors.text.muted, lineHeight: 18, letterSpacing: -0.1 }}>
-                  Screenshots are analyzed privately on your device. They are never stored or uploaded externally.
+                  Screenshots are analyzed privately. They are never stored or uploaded externally.
                 </Text>
               </View>
             </GlassCard>
@@ -135,13 +129,37 @@ export default function UploadScreen() {
             </Animated.View>
           )}
 
+          {/* Optional context note */}
+          <Animated.View entering={FadeInDown.delay(240).duration(400)}>
+            <GlassCard padding={14}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.text.secondary, letterSpacing: -0.2, marginBottom: spacing.sm }}>
+                Anything else you've noticed? <Text style={{ color: Colors.text.disabled, fontWeight: '400' }}>Optional</Text>
+              </Text>
+              <TextInput
+                value={contextNote}
+                onChangeText={setContextNote}
+                placeholder="e.g. refused video calls, asked to move off the app…"
+                placeholderTextColor={Colors.text.disabled}
+                multiline
+                style={{
+                  fontSize: 14,
+                  color: Colors.text.primary,
+                  lineHeight: 20,
+                  letterSpacing: -0.1,
+                  minHeight: 60,
+                  textAlignVertical: 'top',
+                }}
+              />
+            </GlassCard>
+          </Animated.View>
+
           <View style={{ height: 20 }} />
         </ScrollView>
 
         <View style={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.md }}>
           <PrimaryButton
-            label="Continue to Questions"
-            onPress={() => router.push('/scan/context')}
+            label="Run Safety Analysis"
+            onPress={() => router.push('/scan/analyzing')}
             disabled={uploadedImages.length === 0}
           />
         </View>
